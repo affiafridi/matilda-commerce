@@ -1,0 +1,29 @@
+{
+  "name": "@matilda/storefront",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Matilda Commerce storefront (one codebase, per-brand themes).",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "node --test --experimental-strip-types src/lib/api.test.ts"
+  },
+  "dependencies": {
+    "@matilda/api-client": "workspace:*",
+    "@matilda/types": "workspace:*",
+    "next": "16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@matilda/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.1",
+    "@types/react-dom": "^19.3.0",
+    "postcss": "^8.5.33",
+    "tailwindcss": "^4.3.5"
+  }
+}

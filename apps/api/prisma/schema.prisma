@@ -1,0 +1,12 @@
+// Phase 1: Prisma is configured only. NO business models exist yet.
+// The final schema (docs/DATABASE.md) must be designed and reviewed before models are added.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}

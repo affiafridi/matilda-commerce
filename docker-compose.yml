@@ -1,0 +1,33 @@
+# Local development services only. NOT for production (see docs/DEPLOYMENT.md).
+# Usage:  docker compose up -d postgres           (database)
+#         docker compose --profile redis up -d    (database + Redis, when required)
+# Host port defaults to 5434 because native PostgreSQL services may already use 5432/5433. Override with POSTGRES_PORT in the root .env (and update DATABASE_URL to match).
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: matilda-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-matilda}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-matilda_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-matilda_dev}
+    ports:
+      - '${POSTGRES_PORT:-5434}:5432'
+    volumes:
+      - matilda_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-matilda} -d ${POSTGRES_DB:-matilda_dev}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: matilda-redis
+    profiles: ['redis']
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+
+volumes:
+  matilda_postgres_data:

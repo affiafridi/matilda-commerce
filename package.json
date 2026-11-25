@@ -1,0 +1,41 @@
+{
+  "name": "matilda-commerce",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Matilda Commerce: multi-brand, multi-market commerce platform (modular monolith).",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @matilda/api --filter @matilda/storefront --filter @matilda/admin dev",
+    "dev:api": "pnpm --filter @matilda/api dev",
+    "dev:storefront": "pnpm --filter @matilda/storefront dev",
+    "dev:admin": "pnpm --filter @matilda/admin dev",
+    "build:packages": "pnpm --filter \"./packages/*\" build",
+    "build": "pnpm build:packages && pnpm --filter \"./apps/*\" build",
+    "typecheck": "pnpm build:packages && pnpm -r --parallel typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm build:packages && pnpm -r test",
+    "docker:up": "docker compose up -d --wait postgres",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f postgres",
+    "docker:redis:up": "docker compose --profile redis up -d --wait",
+    "db:generate": "pnpm --filter @matilda/api db:generate",
+    "db:migrate": "pnpm --filter @matilda/api db:migrate",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.14.0",
+    "prettier": "3.10.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.74.0"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@matilda/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared TypeScript configuration presets.",
+  "files": [
+    "tsconfig.base.json",
+    "tsconfig.lib.json",
+    "tsconfig.nest.json",
+    "tsconfig.next.json"
+  ]
+}

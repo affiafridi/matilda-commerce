@@ -1,0 +1,15 @@
+{
+  "name": "@matilda/types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared API contract types (no runtime business logic).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@matilda/config": "workspace:*"
+  }
+}

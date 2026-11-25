@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+coverage/
+
+# env and secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# prisma generated client
+apps/api/src/generated/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# test artifacts
+playwright-report/
+test-results/
+
+# next
+next-env.d.ts
