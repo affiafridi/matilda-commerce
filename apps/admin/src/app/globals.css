@@ -1,1 +1,111 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+/*
+ * Matilda Commerce admin tokens (docs/design/admin-brief.html section 2).
+ * Neutral on purpose: no brand colour. Colour carries state only. Dark mode is prepared by the
+ * variable layer below and is not switched on in Phase 2.
+ */
+:root {
+  color-scheme: light;
+  --canvas: #f6f6f7;
+  --surface: #ffffff;
+  --sunken: #eeeef0;
+  --line: #e1e1e5;
+  --line-strong: #c5c5cb;
+  --ink: #18181b;
+  --ink-2: #3f3f46;
+  --muted: #62626a;
+  --action: #18181b;
+  --action-hover: #313137;
+  --action-ink: #ffffff;
+  --focus: #2557a7;
+  --ok: #1f6a3f;
+  --ok-bg: #e7f1ea;
+  --warn: #7f5200;
+  --warn-bg: #f8eed9;
+  --danger: #a02323;
+  --danger-bg: #f9e4e3;
+  --scrim: rgb(24 24 27 / 0.4);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --canvas: #101012;
+  --surface: #18181b;
+  --sunken: #222226;
+  --line: #2e2e33;
+  --line-strong: #46464d;
+  --ink: #f4f4f5;
+  --ink-2: #d4d4d8;
+  --muted: #a1a1aa;
+  --action: #f4f4f5;
+  --action-hover: #d4d4d8;
+  --action-ink: #18181b;
+  --focus: #7aa7e8;
+  --ok: #7fcf9f;
+  --ok-bg: #16281d;
+  --warn: #e3b866;
+  --warn-bg: #2d2412;
+  --danger: #f09a9a;
+  --danger-bg: #301717;
+  --scrim: rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
+  --color-action-ink: var(--action-ink);
+  --color-focus: var(--focus);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100dvh;
+}
+
+/* One consistent, always-visible focus ring (WCAG 2.2 focus appearance). */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::backdrop {
+  background: var(--scrim);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

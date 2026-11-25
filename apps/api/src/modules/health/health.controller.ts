@@ -7,9 +7,13 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import type { HealthResponse, ReadinessResponse } from '@matilda/types';
+import { SkipThrottle } from '@nestjs/throttler';
+import { PublicRoute } from '../iam/authorization/decorators';
 import { HealthResponseDto, ReadinessResponseDto } from './health.dto';
 import { HealthService } from './health.service';
 
+@PublicRoute()
+@SkipThrottle()
 @ApiTags('health')
 @Controller({ path: 'health', version: '1' })
 export class HealthController {

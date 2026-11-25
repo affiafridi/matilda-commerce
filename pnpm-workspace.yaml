@@ -8,3 +8,7 @@ onlyBuiltDependencies:
   - 'prisma'
   - 'sharp'
   - 'unrs-resolver'
+
+overrides:
+  # Patched ReDoS fix (GHSA-7589-6fvf-x4pw); reached only through the Prisma CLI config loader.
+  effect: 3.22.5

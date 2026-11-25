@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Matilda Commerce: design brief (step 2.9, for owner approval)</title>
+    <style>
+      :root {
+        --bg: #f6f6f7;
+        --surface: #ffffff;
+        --sunken: #eeeef0;
+        --line: #e1e1e5;
+        --line-strong: #c5c5cb;
+        --ink: #18181b;
+        --ink-2: #3f3f46;
+        --muted: #62626a;
+        --action: #18181b;
+        --action-ink: #ffffff;
+        --focus: #2a5d9f;
+        --ok: #2f6b45;
+        --ok-bg: #e6efe8;
+        --warn: #8a5a00;
+        --warn-bg: #f6ecd6;
+        --danger: #9b2c2c;
+        --danger-bg: #f5e1df;
+        --radius: 4px;
+        --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 14px/1.5 var(--font);
+      }
+      main {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 40px 24px 96px;
+      }
+      h1 {
+        font-size: 26px;
+        line-height: 1.25;
+        margin: 0 0 6px;
+        font-weight: 600;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 56px 0 4px;
+        font-weight: 600;
+      }
+      h3 {
+        font-size: 14px;
+        margin: 24px 0 8px;
+        font-weight: 600;
+      }
+      p {
+        margin: 6px 0;
+        color: var(--ink-2);
+        max-width: 70ch;
+      }
+      .lede {
+        color: var(--muted);
+      }
+      .note {
+        border-left: 3px solid var(--line-strong);
+        padding: 6px 12px;
+        background: var(--surface);
+        margin: 14px 0;
+      }
+      .ask {
+        border-left-color: var(--warn);
+        background: var(--warn-bg);
+        color: var(--ink);
+      }
+      table.spec {
+        border-collapse: collapse;
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+      table.spec th,
+      table.spec td {
+        text-align: left;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      table.spec th {
+        font-weight: 600;
+        background: var(--sunken);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--ink-2);
+      }
+      .sw {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 1px solid var(--line-strong);
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+      code {
+        font:
+          12px ui-monospace,
+          Consolas,
+          monospace;
+        background: var(--sunken);
+        padding: 1px 4px;
+        border-radius: 2px;
+      }
+
+      /* wireframe frame */
+      .frame {
+        margin: 14px 0 6px;
+        border: 1px solid var(--line-strong);
+        background: var(--bg);
+        overflow: hidden;
+      }
+      .frame > .cap {
+        padding: 6px 12px;
+        font-size: 12px;
+        color: var(--muted);
+        border-bottom: 1px solid var(--line);
+        background: var(--sunken);
+      }
+      .screen {
+        padding: 0;
+        min-height: 120px;
+      }
+      .center {
+        display: grid;
+        place-items: center;
+        padding: 40px 16px;
+        min-height: 380px;
+      }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 24px;
+        width: 100%;
+        max-width: 380px;
+      }
+      .panel h4 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .panel .sub {
+        color: var(--muted);
+        margin: 0 0 18px;
+      }
+      label {
+        display: block;
+        font-weight: 500;
+        margin: 12px 0 4px;
+        font-size: 13px;
+      }
+      .field {
+        height: 36px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        background: var(--surface);
+        padding: 7px 10px;
+        color: var(--muted);
+      }
+      .field.focus {
+        outline: 2px solid var(--focus);
+        outline-offset: 1px;
+        color: var(--ink);
+      }
+      .help {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .err {
+        font-size: 12px;
+        color: var(--danger);
+        margin-top: 4px;
+      }
+      .btn {
+        display: inline-block;
+        height: 36px;
+        line-height: 34px;
+        padding: 0 14px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        background: var(--surface);
+        font-weight: 500;
+        color: var(--ink);
+      }
+      .btn.primary {
+        background: var(--action);
+        color: var(--action-ink);
+        border-color: var(--action);
+      }
+      .btn.danger {
+        color: var(--danger);
+        border-color: #d9b4b1;
+      }
+      .btn.block {
+        display: block;
+        text-align: center;
+        margin-top: 18px;
+      }
+      .codes {
+        display: flex;
+        gap: 6px;
+        margin: 8px 0;
+      }
+      .codes span {
+        width: 38px;
+        height: 44px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+      }
+      .qr {
+        width: 120px;
+        height: 120px;
+        border: 1px solid var(--line-strong);
+        background: repeating-conic-gradient(var(--ink) 0% 25%, var(--surface) 0% 50%) 0 0/16px 16px;
+      }
+
+      /* shell */
+      .shell {
+        display: grid;
+        grid-template-columns: 224px 1fr;
+        min-height: 560px;
+        background: var(--bg);
+      }
+      .nav {
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+        padding: 12px 0;
+      }
+      .nav .brand {
+        padding: 4px 16px 12px;
+        font-weight: 600;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 8px;
+      }
+      .nav .grp {
+        padding: 12px 16px 4px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+      .nav a {
+        display: block;
+        padding: 6px 16px;
+        color: var(--ink-2);
+        text-decoration: none;
+        border-left: 2px solid transparent;
+      }
+      .nav a.on {
+        border-left-color: var(--ink);
+        background: var(--sunken);
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .sel {
+        height: 32px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        padding: 5px 10px;
+        background: var(--surface);
+        min-width: 130px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .sel small {
+        color: var(--muted);
+      }
+      .sel.dis {
+        background: var(--sunken);
+        color: var(--muted);
+      }
+      .spacer {
+        flex: 1;
+      }
+      .content {
+        padding: 20px 24px;
+      }
+      .pagehead {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .pagehead h4 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .crumb {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+      .tag {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 2px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .tag.ok {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .tag.warn {
+        background: var(--warn-bg);
+        color: var(--warn);
+      }
+      .tag.off {
+        background: var(--sunken);
+        color: var(--muted);
+      }
+      .tag.danger {
+        background: var(--danger-bg);
+        color: var(--danger);
+      }
+      .grid {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+      .grid th {
+        text-align: left;
+        font-size: 12px;
+        color: var(--ink-2);
+        background: var(--sunken);
+        padding: 7px 12px;
+        border-bottom: 1px solid var(--line);
+        font-weight: 600;
+      }
+      .grid td {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .grid tr.sel-row td {
+        background: #f1f4f9;
+      }
+      .grid .num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .bulk {
+        background: var(--ink);
+        color: #fff;
+        padding: 8px 12px;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        border-radius: var(--radius);
+        margin-bottom: 8px;
+      }
+      .pager {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        padding: 8px 2px;
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 24px;
+      }
+      .form {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        padding: 4px 20px 20px;
+      }
+      .form .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .side {
+        color: var(--ink-2);
+      }
+      .side h5 {
+        margin: 0 0 6px;
+        font-size: 13px;
+      }
+      .drawer-wrap {
+        position: relative;
+        min-height: 360px;
+      }
+      .drawer {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 360px;
+        background: var(--surface);
+        border-left: 1px solid var(--line-strong);
+        padding: 16px 20px;
+        box-shadow: -1px 0 0 var(--line);
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(28, 27, 25, 0.28);
+      }
+      .skel {
+        height: 12px;
+        background: var(--sunken);
+        margin: 10px 0;
+      }
+      .states {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .state {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        padding: 16px;
+        min-height: 160px;
+      }
+      .matrix td,
+      .matrix th {
+        text-align: center;
+      }
+      .matrix td:first-child,
+      .matrix th:first-child {
+        text-align: left;
+      }
+      .dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        background: var(--ink);
+      }
+      .dot.no {
+        background: transparent;
+        border: 1px solid var(--line-strong);
+      }
+      .legend {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      @media (max-width: 860px) {
+        .shell,
+        .cols,
+        .states {
+          grid-template-columns: 1fr;
+        }
+        .nav {
+          display: none;
+        }
+        .drawer {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Matilda Commerce: design brief</h1>
+      <div class="note">
+        <strong>Status: approved by the owner on 2026-11-25 with the final direction below.</strong>
+        Platform name: Matilda Commerce. The official logo is used where it fits, but brand colours
+        are not carried into the interface; each storefront keeps its own identity. Collapsible
+        sidebar, content that uses the full width, Inter, 4 to 6px radii, and a variable-based token
+        layer that is ready for dark mode and right-to-left (logical CSS properties) while shipping
+        light and English only in Phase 2. The logo file has not been supplied yet, so a text
+        wordmark is used.
+      </div>
+      <p class="lede">
+        Phase 2, step 2.9. This is a proposal for your review. No admin UI will be built until you
+        approve it. It covers the visual language, the navigation model, and wireframes of the
+        screens the plan lists. Nothing here is branded: the admin uses a neutral token set that is
+        separate from the three storefront identities.
+      </p>
+      <div class="note ask">
+        <strong>What I need from you:</strong> approve, or mark up, the items in section 8
+        (decisions). The most consequential ones are the primary-action colour, the typeface, and
+        the information density.
+      </div>
+
+      <h2>1. Principles</h2>
+      <table class="spec">
+        <tr>
+          <th style="width: 210px">Principle</th>
+          <th>What it means here</th>
+        </tr>
+        <tr>
+          <td>Enterprise tool, not a showcase</td>
+          <td>
+            Tables, forms, tabs, drawers. No card grids, no hero areas, no decorative illustration.
+            Shopify Admin is a usability reference only; nothing is copied.
+          </td>
+        </tr>
+        <tr>
+          <td>Quiet and flat</td>
+          <td>
+            No gradients, glass, glow or heavy shadows. Separation comes from 1px lines and two
+            background levels. Corner radius 4px on controls and 6px on panels and dialogs. No pill
+            shapes (status labels are square-cornered text on a tinted background).
+          </td>
+        </tr>
+        <tr>
+          <td>Dense but readable</td>
+          <td>
+            Default row height 36px, 14px text, 8px spacing grid. A compact option (30px rows) is
+            available per table for power users.
+          </td>
+        </tr>
+        <tr>
+          <td>Scope is always visible</td>
+          <td>
+            The brand / market / branch you are working in is on screen at all times, and everything
+            on the page is filtered to it.
+          </td>
+        </tr>
+        <tr>
+          <td>The API is the authority</td>
+          <td>
+            Menus show only what you may use, but that is a convenience. Every action is checked
+            again by the server, and the UI shows a clear message if the server refuses.
+          </td>
+        </tr>
+        <tr>
+          <td>Accessible by default</td>
+          <td>
+            WCAG 2.2 AA, full keyboard use, visible focus, no information by colour alone,
+            reduced-motion respected. English only in Phase 2 (decision D2-17).
+          </td>
+        </tr>
+      </table>
+
+      <h2>2. Visual tokens</h2>
+      <p>
+        Neutral, neutral grey surfaces so the tool recedes. Colour is reserved for state (success,
+        warning, danger) and one focus colour. The primary action is near-black, so the admin
+        carries no brand colour at all.
+      </p>
+      <table class="spec">
+        <tr>
+          <th style="width: 210px">Token</th>
+          <th>Value</th>
+          <th>Use</th>
+        </tr>
+        <tr>
+          <td><span class="sw" style="background: #f6f6f7"></span>background</td>
+          <td><code>#f6f6f7</code></td>
+          <td>Page canvas</td>
+        </tr>
+        <tr>
+          <td><span class="sw" style="background: #fff"></span>surface</td>
+          <td><code>#ffffff</code></td>
+          <td>Tables, forms, navigation, drawers</td>
+        </tr>
+        <tr>
+          <td><span class="sw" style="background: #eeeef0"></span>sunken</td>
+          <td><code>#eeeef0</code></td>
+          <td>Table headers, selected nav item, disabled fields</td>
+        </tr>
+        <tr>
+          <td><span class="sw" style="background: #e1e1e5"></span>line / line-strong</td>
+          <td><code>#e1e1e5</code> / <code>#c5c5cb</code></td>
+          <td>Dividers; input borders</td>
+        </tr>
+        <tr>
+          <td><span class="sw" style="background: #18181b"></span>ink</td>
+          <td><code>#18181b</code> (text 17:1)</td>
+          <td>Primary text and primary button</td>
+        </tr>
+        <tr>
+          <td><span class="sw" style="background: #62626a"></span>muted</td>
+          <td><code>#62626a</code> (5.9:1 on white)</td>
+          <td>Secondary text, hints</td>
+        </tr>
+        <tr>
+          <td><span class="sw" style="background: #2a5d9f"></span>focus</td>
+          <td><code>#2a5d9f</code></td>
+          <td>2px focus ring on every interactive element</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="sw" style="background: #2f6b45"></span
+            ><span class="sw" style="background: #8a5a00"></span
+            ><span class="sw" style="background: #9b2c2c"></span>state
+          </td>
+          <td>green / amber / red on tinted backgrounds, all ≥ 4.5:1</td>
+          <td>Status text always carries a word, never colour alone</td>
+        </tr>
+        <tr>
+          <td>Type</td>
+          <td>
+            Inter (self-hosted via the framework font loader), system fallback. 12 / 14 / 16 / 20 /
+            26 px; weights 400, 500, 600. Tabular figures in tables.
+          </td>
+          <td>No decorative faces</td>
+        </tr>
+        <tr>
+          <td>Spacing / radius / motion</td>
+          <td>
+            8px grid (4px half-step). Radius 4px for controls, 6px for panels. Motion limited to
+            120ms opacity and position changes, removed when reduced-motion is on.
+          </td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Icons</td>
+          <td>
+            One outline icon set (Lucide), 16px, always paired with a text label in navigation. No
+            emoji.
+          </td>
+          <td></td>
+        </tr>
+      </table>
+
+      <h2>3. Navigation model</h2>
+      <p>
+        A fixed left navigation grouped as in the admin specification, and a top bar that holds the
+        scope switchers and the account menu. Only groups and items the signed-in person may use are
+        shown, and modules that do not exist yet are hidden rather than shown as placeholders. In
+        Phase 2 the visible items are:
+      </p>
+      <table class="spec">
+        <tr>
+          <th style="width: 210px">Group</th>
+          <th>Items (permission that reveals it)</th>
+        </tr>
+        <tr>
+          <td>Operations</td>
+          <td>
+            Brands and domains (<code>brands.view</code>), Markets (<code>markets.view</code>),
+            Branches (<code>branches.view</code>)
+          </td>
+        </tr>
+        <tr>
+          <td>Commerce</td>
+          <td>Customers, read-only (<code>customers.view</code>)</td>
+        </tr>
+        <tr>
+          <td>Administration</td>
+          <td>
+            Employees (<code>users.view</code>), Roles and permissions (<code>roles.view</code>),
+            Audit log (<code>audit.view</code>)
+          </td>
+        </tr>
+        <tr>
+          <td>Account menu</td>
+          <td>Security (password, two-factor, sign out of all devices), Sign out</td>
+        </tr>
+      </table>
+      <p>
+        The Overview, Finance, Marketing and the rest of Commerce appear only when their modules are
+        built in later phases. A Branch Manager therefore never sees Finance, and a Catalog Manager
+        never sees Employees.
+      </p>
+
+      <h3>Scope switchers (top bar)</h3>
+      <p>
+        Brand → Market → Branch, each filtered by the one before it and by what the person is
+        assigned. People with platform-wide access also get an "All brands" choice. Someone assigned
+        to one branch sees the switchers disabled and showing that branch. Changing scope clears
+        cached data and returns to the current page in the new scope. The choice is remembered per
+        person on that device and is sent to the API only as a hint that the server validates (a
+        forged value is rejected).
+      </p>
+
+      <h2>4. Wireframes</h2>
+      <p class="legend">
+        Greyscale structure only. Sample text is placeholder, not real data. Tokens above apply.
+      </p>
+
+      <h3>4.1 Sign in</h3>
+      <div class="frame">
+        <div class="cap">
+          /sign-in. One card, centred. Same layout for forgot-password and accept-invite.
+        </div>
+        <div class="screen center">
+          <div class="panel">
+            <h4>Sign in to Matilda Commerce</h4>
+            <p class="sub">Use your work email.</p>
+            <label>Email</label>
+            <div class="field focus">name@company.com</div>
+            <label>Password</label>
+            <div class="field">••••••••••••</div>
+            <div class="help"><u>Forgot your password?</u></div>
+            <span class="btn primary block">Continue</span>
+          </div>
+        </div>
+      </div>
+      <div class="frame">
+        <div class="cap">
+          Wrong credentials. One message for every failure; locked accounts say "try again later"
+          without naming the account.
+        </div>
+        <div class="screen center" style="min-height: 240px">
+          <div class="panel">
+            <div
+              class="note"
+              style="
+                border-left-color: var(--danger);
+                background: var(--danger-bg);
+                margin: 0 0 12px;
+              "
+            >
+              The email or password is incorrect.
+            </div>
+            <label>Email</label>
+            <div class="field">name@company.com</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>4.2 Two-factor: verify, enroll, recovery</h3>
+      <div class="frame">
+        <div class="cap">
+          /sign-in/verify (returning staff) · enrollment appears first for new staff · "Use a
+          recovery code" swaps the field.
+        </div>
+        <div class="screen center">
+          <div class="panel">
+            <h4>Enter your 6-digit code</h4>
+            <p class="sub">From your authenticator app.</p>
+            <div class="codes">
+              <span>4</span><span>8</span><span>2</span><span>·</span><span>·</span><span>·</span>
+            </div>
+            <div class="err">That code is not valid or has expired.</div>
+            <span class="btn primary block">Verify</span>
+            <p class="help" style="margin-top: 12px">
+              <u>Use a recovery code</u> · <u>Cancel and sign out</u>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="frame">
+        <div class="cap">
+          /sign-in/enroll (first sign-in). QR plus the text secret for manual entry, then confirm
+          with a code; recovery codes are shown once with a "I saved them" confirmation.
+        </div>
+        <div class="screen center">
+          <div class="panel" style="max-width: 520px">
+            <h4>Set up two-factor authentication</h4>
+            <p class="sub">Required for everyone with access to Matilda Commerce.</p>
+            <div style="display: flex; gap: 20px">
+              <div class="qr"></div>
+              <div>
+                <p>1. Scan this code with an authenticator app.</p>
+                <p class="help">Can't scan? Enter the key <code>ABCD EFGH IJKL MNOP</code>.</p>
+                <p>2. Enter the 6-digit code it shows.</p>
+              </div>
+            </div>
+            <div class="codes">
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <span class="btn primary">Confirm and continue</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>4.3 Application shell with switchers</h3>
+      <div class="frame">
+        <div class="cap">
+          Desktop ≥ 1024px. Below that the navigation becomes a menu button; tables scroll inside
+          their own container, the page never scrolls sideways.
+        </div>
+        <div class="screen">
+          <div class="shell">
+            <nav class="nav">
+              <div class="brand">Matilda Commerce</div>
+              <div class="grp">Operations</div>
+              <a>Brands and domains</a><a>Markets</a><a>Branches</a>
+              <div class="grp">Commerce</div>
+              <a>Customers</a>
+              <div class="grp">Administration</div>
+              <a class="on">Employees</a><a>Roles and permissions</a><a>Audit log</a>
+            </nav>
+            <div>
+              <div class="top">
+                <div class="sel">
+                  <span><small>Brand</small> Matilda Flower</span><span>▾</span>
+                </div>
+                <div class="sel">
+                  <span><small>Market</small> UAE</span><span>▾</span>
+                </div>
+                <div class="sel dis">
+                  <span><small>Branch</small> All branches</span><span>▾</span>
+                </div>
+                <div class="spacer"></div>
+                <div class="sel" style="min-width: 0"><span>A. Person</span><span>▾</span></div>
+              </div>
+              <div class="content">
+                <div class="pagehead">
+                  <span class="crumb">Administration /</span>
+                  <h4>Employees</h4>
+                  <div class="spacer"></div>
+                  <span class="btn primary">Invite employee</span>
+                </div>
+                <p>Page body. See 4.4 to 4.7.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p>
+        Scope states: <strong>Super Admin</strong> sees "All brands" and may narrow.
+        <strong>Brand manager</strong> sees only their brand and its markets.
+        <strong>Branch manager</strong> sees all three switchers locked to their branch (greyed,
+        with a tooltip "Your access is limited to this branch").
+      </p>
+
+      <h3>4.4 Data table: filters, bulk actions, selection</h3>
+      <div class="frame">
+        <div class="cap">
+          Employees list. Same pattern for every list: search, filter chips, column picker, saved
+          views (later), keyboard-sortable headers, row action menu, pagination, density toggle.
+        </div>
+        <div class="screen">
+          <div class="content" style="background: var(--bg)">
+            <div class="toolbar">
+              <div class="field" style="width: 260px">Search name or email</div>
+              <span class="btn">Status: Active ▾</span><span class="btn">Role ▾</span
+              ><span class="btn">Branch ▾</span><span class="spacer"></span
+              ><span class="btn">Columns</span><span class="btn">Density</span>
+            </div>
+            <div class="bulk">
+              <span>2 selected</span><span>Suspend</span><span>Revoke assignments</span
+              ><span class="spacer"></span><span>Clear</span>
+            </div>
+            <table class="grid">
+              <tr>
+                <th style="width: 32px"><input type="checkbox" aria-label="Select all" /></th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role · scope</th>
+                <th>Status</th>
+                <th>Last sign-in</th>
+                <th></th>
+              </tr>
+              <tr class="sel-row">
+                <td><input type="checkbox" checked /></td>
+                <td>Sample Person One</td>
+                <td>one@example.test</td>
+                <td>Branch Manager · Dubai branch</td>
+                <td><span class="tag ok">Active</span></td>
+                <td>Today 09:12</td>
+                <td>⋯</td>
+              </tr>
+              <tr class="sel-row">
+                <td><input type="checkbox" checked /></td>
+                <td>Sample Person Two</td>
+                <td>two@example.test</td>
+                <td>Catalog Manager · Matilda Flower</td>
+                <td><span class="tag warn">Invited</span></td>
+                <td>Never</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" /></td>
+                <td>Sample Person Three</td>
+                <td>three@example.test</td>
+                <td>Support · Matilda Flower</td>
+                <td><span class="tag off">Suspended</span></td>
+                <td>12 Nov</td>
+                <td>⋯</td>
+              </tr>
+            </table>
+            <div class="pager">
+              <span>Showing 1 to 25 of 41</span><span>Previous · 1 · 2 · Next</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p>
+        Bulk bar replaces the toolbar's spacing only while rows are selected; destructive bulk
+        actions ask for confirmation (4.7) and, where the action is sensitive, for the two-factor
+        code first.
+      </p>
+
+      <h3>4.5 Form page</h3>
+      <div class="frame">
+        <div class="cap">
+          Edit brand. Single column of grouped fields on the left, short context on the right. Save
+          bar sticks to the bottom; unsaved changes warn before leaving.
+        </div>
+        <div class="screen">
+          <div class="content">
+            <div class="pagehead">
+              <span class="crumb">Operations / Brands /</span>
+              <h4>Matilda Flower</h4>
+              <span class="tag ok">Active</span>
+            </div>
+            <div class="cols">
+              <div class="form">
+                <h3>Details</h3>
+                <div class="row">
+                  <div>
+                    <label>Name</label>
+                    <div class="field focus">Matilda Flower</div>
+                  </div>
+                  <div>
+                    <label>Legal entity</label>
+                    <div class="field">Example Trading LLC</div>
+                  </div>
+                </div>
+                <label>Slug</label>
+                <div class="field" style="background: var(--sunken)">matilda-flower</div>
+                <div class="help">Cannot be changed after creation.</div>
+                <label>Status</label>
+                <div class="field">Active ▾</div>
+                <div class="err">Name is required.</div>
+                <div style="margin-top: 18px; display: flex; gap: 8px">
+                  <span class="btn primary">Save changes</span><span class="btn">Cancel</span>
+                </div>
+              </div>
+              <div class="side">
+                <h5>Domains</h5>
+                <p>2 domains. Edit them on the Domains tab.</p>
+                <h5>Who can edit</h5>
+                <p>
+                  Requires "Create and edit brands and domains". Saving asks for your two-factor
+                  code if it was not confirmed in the last 10 minutes.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>4.6 Drawer</h3>
+      <div class="frame">
+        <div class="cap">
+          Used for quick create/edit that should keep list context (assign a role, add a domain).
+          Focus is trapped, Esc closes, focus returns to the trigger.
+        </div>
+        <div class="screen">
+          <div class="drawer-wrap">
+            <div class="content"><p>Employees list behind the scrim.</p></div>
+            <div class="scrim"></div>
+            <aside class="drawer">
+              <h4 style="margin: 0 0 4px; font-size: 16px">Assign a role</h4>
+              <p class="help">Sample Person Two</p>
+              <label>Role</label>
+              <div class="field">Catalog Manager ▾</div>
+              <label>Scope</label>
+              <div class="field">Brand: Matilda Flower ▾</div>
+              <div class="field" style="margin-top: 6px">Market: All ▾</div>
+              <div class="field" style="margin-top: 6px">Branch: All ▾</div>
+              <div class="help">
+                This role can view and edit products in the chosen scope. You can only assign what
+                you hold yourself.
+              </div>
+              <div style="margin-top: 18px; display: flex; gap: 8px">
+                <span class="btn primary">Assign</span><span class="btn">Cancel</span>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <h3>4.7 Confirmation of a destructive action</h3>
+      <div class="frame">
+        <div class="cap">
+          Centred dialog, never a browser alert. The action button repeats the verb. Irreversible
+          actions require typing the item name.
+        </div>
+        <div class="screen center" style="min-height: 260px">
+          <div class="panel">
+            <h4>Deactivate Sample Person Two?</h4>
+            <p class="sub">
+              They will be signed out everywhere immediately and can no longer sign in. This cannot
+              be undone from the admin.
+            </p>
+            <label>Type the email to confirm</label>
+            <div class="field">two@example.test</div>
+            <div style="margin-top: 18px; display: flex; gap: 8px">
+              <span class="btn danger">Deactivate employee</span
+              ><span class="btn">Keep active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>4.8 Roles and permissions matrix</h3>
+      <div class="frame">
+        <div class="cap">
+          Permissions grouped by area; system roles are read-only with a "Clone to edit" action;
+          sensitive permissions are marked with a text label.
+        </div>
+        <div class="screen">
+          <div class="content">
+            <table class="grid matrix">
+              <tr>
+                <th>Permission</th>
+                <th>Branch Manager</th>
+                <th>Catalog Manager</th>
+                <th>Custom: Front desk</th>
+              </tr>
+              <tr>
+                <td>View orders</td>
+                <td><span class="dot"></span></td>
+                <td><span class="dot no"></span></td>
+                <td><span class="dot"></span></td>
+              </tr>
+              <tr>
+                <td>Edit products</td>
+                <td><span class="dot no"></span></td>
+                <td><span class="dot"></span></td>
+                <td><span class="dot no"></span></td>
+              </tr>
+              <tr>
+                <td>Approve refunds <span class="tag warn">Sensitive</span></td>
+                <td><span class="dot"></span></td>
+                <td><span class="dot no"></span></td>
+                <td><span class="dot no"></span></td>
+              </tr>
+            </table>
+            <p class="legend" style="margin-top: 8px">
+              Filled square = granted. Each cell has an accessible label ("Branch Manager:
+              granted").
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h3>4.9 Loading, empty and error states</h3>
+      <div class="states">
+        <div class="state">
+          <h3 style="margin-top: 0">Loading</h3>
+          <div class="skel" style="width: 60%"></div>
+          <div class="skel"></div>
+          <div class="skel" style="width: 80%"></div>
+          <p class="help">
+            Table-shaped placeholders, no spinner over content. Announced to screen readers as
+            "Loading employees".
+          </p>
+        </div>
+        <div class="state">
+          <h3 style="margin-top: 0">Empty</h3>
+          <p><strong>No employees match these filters.</strong></p>
+          <p class="help">
+            Clear the filters, or invite someone. When the list is truly empty the page states what
+            belongs here and offers the one next action.
+          </p>
+          <span class="btn">Clear filters</span>
+        </div>
+        <div class="state">
+          <h3 style="margin-top: 0">Error</h3>
+          <p><strong>We could not load employees.</strong></p>
+          <p class="help">
+            The server did not answer. Your changes were not lost. Reference: a1b2c3 (request id,
+            for support).
+          </p>
+          <span class="btn">Try again</span>
+        </div>
+      </div>
+      <div class="states" style="margin-top: 12px">
+        <div class="state">
+          <h3 style="margin-top: 0">No permission (403)</h3>
+          <p><strong>You don't have access to this.</strong></p>
+          <p class="help">Ask an administrator for the "View employees" permission.</p>
+        </div>
+        <div class="state">
+          <h3 style="margin-top: 0">Session ended (401)</h3>
+          <p><strong>You have been signed out.</strong></p>
+          <p class="help">
+            For your security sessions end after 30 minutes of inactivity. Sign in to continue where
+            you were.
+          </p>
+          <span class="btn primary">Sign in</span>
+        </div>
+        <div class="state">
+          <h3 style="margin-top: 0">Confirm identity (step-up)</h3>
+          <p><strong>Enter your 6-digit code to continue.</strong></p>
+          <p class="help">Needed for sensitive changes. Good for 10 minutes.</p>
+          <div class="codes">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
+      <h2>5. How it behaves with the API (technical, for your information)</h2>
+      <table class="spec">
+        <tr>
+          <th style="width: 210px">Topic</th>
+          <th>Decision</th>
+        </tr>
+        <tr>
+          <td>Same-origin proxy (D2-02)</td>
+          <td>
+            The admin app forwards <code>/api/*</code> to the API, so the browser only ever talks to
+            the admin's own origin. Session cookies stay host-only and CSRF stays simple. The admin
+            adds the shared secret the API requires; the browser never sees it.
+          </td>
+        </tr>
+        <tr>
+          <td>Session and CSRF</td>
+          <td>
+            The session cookie is HttpOnly and never readable by scripts. The per-session CSRF token
+            returned at sign-in is kept in memory only and sent on every change. A 401 sends the
+            person to sign in and back to where they were. A step-up response opens the code dialog
+            and retries the action once.
+          </td>
+        </tr>
+        <tr>
+          <td>Data fetching</td>
+          <td>
+            TanStack Query for server data and TanStack Table for tables; React Hook Form with the
+            shared Zod schemas for forms; React context for the scope switchers (decision D2-09). No
+            global state library.
+          </td>
+        </tr>
+        <tr>
+          <td>Components</td>
+          <td>shadcn/ui primitives, restyled to these tokens (no default look ships).</td>
+        </tr>
+        <tr>
+          <td>Quality gates</td>
+          <td>
+            Keyboard-only walkthrough of every screen, automated accessibility checks (axe,
+            Lighthouse) with a score of 100 required on the shell and sign-in pages, and Playwright
+            end-to-end tests arrive in step 2.10.
+          </td>
+        </tr>
+      </table>
+
+      <h2>6. Screen inventory for step 2.9 and 2.10</h2>
+      <p>
+        <strong>2.9 (after approval):</strong> sign in, two-factor verify and enroll, recovery code,
+        accept invitation, forgot and reset password, account security, the shell (navigation,
+        switchers, account menu), and the error/empty/loading components.
+        <strong>2.10:</strong> brands and domains, markets, branches, employees and assignments,
+        roles and permissions matrix, audit log, customers (read-only). No dashboards or analytics
+        in Phase 2.
+      </p>
+
+      <h2>7. Explicitly out of scope</h2>
+      <p>
+        Arabic or right-to-left admin (D2-17), dark mode, mobile-first operational views for
+        production and riders (later phases), real-time alerts, and any brand theming of the admin.
+      </p>
+
+      <h2>8. Decisions I need from you</h2>
+      <table class="spec">
+        <tr>
+          <th style="width: 44px">#</th>
+          <th>Decision</th>
+          <th style="width: 260px">My recommendation</th>
+        </tr>
+        <tr>
+          <td>A1</td>
+          <td>
+            Overall direction: flat, neutral grey, near-black primary action, 4 to 6px corners, no
+            brand colour in the admin.
+          </td>
+          <td>Approve as shown.</td>
+        </tr>
+        <tr>
+          <td>A2</td>
+          <td>Typeface: Inter, self-hosted, system fallback.</td>
+          <td>Approve; alternative is the system font only (fastest, less refined).</td>
+        </tr>
+        <tr>
+          <td>A3</td>
+          <td>Density: 36px rows by default with a compact 30px option.</td>
+          <td>Approve.</td>
+        </tr>
+        <tr>
+          <td>A4</td>
+          <td>
+            Navigation: left navigation with the groups shown, switchers in the top bar, items
+            hidden (not greyed) when not permitted or not built.
+          </td>
+          <td>Approve.</td>
+        </tr>
+        <tr>
+          <td>A5</td>
+          <td>Light theme only in Phase 2.</td>
+          <td>Approve; dark mode can be added later because tokens are variables.</td>
+        </tr>
+        <tr>
+          <td>A6</td>
+          <td>
+            Libraries as in D2-09 (shadcn/ui restyled, TanStack Query and Table, React Hook Form)
+            and Lucide icons.
+          </td>
+          <td>Approve.</td>
+        </tr>
+        <tr>
+          <td>A7</td>
+          <td>
+            Do you have an existing admin or tool look (colours, logo for the sign-in screen) you
+            want me to follow? I have not invented a logo; the sign-in shows the text "Matilda
+            Admin".
+          </td>
+          <td>Send assets if you have them; otherwise keep text only.</td>
+        </tr>
+      </table>
+      <div class="note ask">
+        Reply with "approve" (or the items you want changed). I will record your approval in the
+        decision log and only then start building the shell and sign-in screens.
+      </div>
+    </main>
+  </body>
+</html>

@@ -41,6 +41,8 @@ Status: **Phase 0 (Planning and Documentation).** No application code exists. En
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Infrastructure, CI/CD, backups |
 | [FEATURE-PARITY.md](FEATURE-PARITY.md) | Matilda Cake / WooCommerce parity checklist |
 | [ROADMAP.md](ROADMAP.md) | Phases 0–12 |
+| [PHASE-2-PLAN.md](PHASE-2-PLAN.md) | Phase 2 implementation plan (approved; in progress) |
+| [PHASE-2-SCHEMA-DRAFT.md](PHASE-2-SCHEMA-DRAFT.md) | Step 2.2 tenancy DDL draft approved and implemented |
 | [PROGRESS.md](PROGRESS.md) | Current status |
 | [DECISIONS.md](DECISIONS.md) | Decision log and open questions |
 | [CHANGELOG.md](CHANGELOG.md) | Important project changes |

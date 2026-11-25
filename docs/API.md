@@ -40,6 +40,37 @@ Each surface has its own guards, DTOs and rate limits. Staff and customer authen
 - Helmet security headers; CORS restricted to `CORS_ORIGINS`.
 - Not implemented yet: surface prefixes (`/storefront`, `/admin`, ...), authentication, authorization guards, tenant resolution, rate limiting, idempotency, pagination helpers beyond the shared query schema.
 
+## Admin management API (Phase 2 step 2.7)
+
+`POST /api/v1/admin/auth/csrf` issues a fresh per-session CSRF token for the current session cookie (needed after a page reload; Origin-checked, response unreadable cross-site); the old token stops working.
+
+All under `/api/v1/admin`, cookie-authenticated, tagged `admin-*` in Swagger. Reads need the `*.view` permission, writes the `*.manage` one (sensitive ones also need a fresh step-up). Out-of-scope records answer 404 and lists are filtered to scope. List responses for staff are paginated (`page`, `pageSize`); the audit log uses keyset paging (`before`, `limit`, response `nextBefore`).
+
+| Area | Routes |
+|---|---|
+| Context | `GET /me`, `GET /me/context` (optional `X-Admin-Brand`) |
+| Brands | `GET/POST /brands`, `GET/PATCH /brands/:id`, `GET/POST /brands/:id/domains`, `PATCH/DELETE /brands/:id/domains/:domainId` |
+| Markets | `GET/POST /markets`, `GET/PATCH /markets/:id` |
+| Branches | `GET/POST /branches`, `GET/PATCH /branches/:id`, `PUT/DELETE /branches/:id/markets/:marketId` |
+| Staff | `GET/POST /staff`, `GET/PATCH /staff/:id`, `POST /staff/:id/invite`, `PATCH /staff/:id/status`, `POST /staff/:id/assignments`, `DELETE /assignments/:id` |
+| Access | `GET /permissions`, `GET/POST /roles`, `GET/PATCH/DELETE /roles/:id`, `POST /roles/:id/clone` |
+| Audit | `GET /audit` |
+
+## Customer API (Phase 2 step 2.8)
+
+Brand comes from the host only. Cookie `matilda_customer`; mutations need a same-brand `Origin` and, when signed in, the `X-CSRF-Token` returned by login.
+
+| Route | Notes |
+|---|---|
+| `POST /customer/auth/register` | 202 always (enumeration-safe) |
+| `POST /customer/auth/verify-email` | `{token}`, single-use, 24 h |
+| `POST /customer/auth/login` | 200 + cookie + `csrfToken`; uniform 401; 429 after repeated failures |
+| `POST /customer/auth/forgot-password` | 202 always |
+| `POST /customer/auth/reset-password` | `{token, password}`, single-use, 1 h, revokes sessions |
+| `GET/PATCH /customer/me` | profile and marketing consent |
+| `POST /customer/auth/logout`, `/customer/me/verification-email`, `/customer/me/password`, `/customer/me/deletion-request` | signed in |
+| `GET /admin/customers[/:id]` | staff, `customers.view`, brand-wide or platform scope |
+
 ## Tenant resolution [Approved]
 
 Brand is derived from the trusted domain→brand mapping (and authenticated context). Headers/body/query IDs for brand are ignored or validated against the resolved context. See [MULTI-STORE](MULTI-STORE.md).

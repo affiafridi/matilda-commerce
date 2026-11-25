@@ -1,5 +1,9 @@
 # Customer Authentication and Accounts
 
+## Implemented in Phase 2 step 2.8
+
+Registration, email verification, login/logout, password forgot/reset/change, profile (including marketing consent with timestamp and source) and deletion request are available as API under `/api/v1/customer` (brand from the host; accounts and sessions are isolated per brand by row-level security). Not yet: phone verification, saved addresses, order history and the other items below, which arrive with their phases.
+
 ## Registered Customer [Approved]
 
 An explicit account type with **no administrative permissions**. Functionality:

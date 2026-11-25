@@ -5,3 +5,7 @@ coverage
 pnpm-lock.yaml
 apps/api/src/generated
 *.md
+.next-e2e
+test-results
+playwright-report
+apps/admin/e2e/.tmp

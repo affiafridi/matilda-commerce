@@ -20,13 +20,16 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm build:packages && pnpm -r test",
-    "docker:up": "docker compose up -d --wait postgres",
+    "docker:up": "docker compose up -d --wait postgres && node infrastructure/postgres/bootstrap.mjs",
+    "db:bootstrap": "node infrastructure/postgres/bootstrap.mjs",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f postgres",
     "docker:redis:up": "docker compose --profile redis up -d --wait",
     "db:generate": "pnpm --filter @matilda/api db:generate",
     "db:migrate": "pnpm --filter @matilda/api db:migrate",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "test:int": "pnpm build:packages && pnpm --filter @matilda/api test:int",
+    "check:full": "pnpm check && pnpm test:int"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

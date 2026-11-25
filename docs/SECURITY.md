@@ -4,6 +4,8 @@ Production-grade practices throughout. Never commit secrets or production creden
 
 ## Authentication [Approved]
 
+**Implemented for staff in Phase 2 step 2.6:** opaque server-side sessions (hashed token, HttpOnly SameSite=Lax cookie, `__Host-`/Secure outside development), Argon2id with optional pepper, mandatory TOTP with encrypted secrets and replay protection, hashed single-use recovery codes, lockout (5 failures, 15 minutes doubling to 24 h, per account and per IP+account, identical for unknown accounts), uniform login errors, step-up for sensitive permissions, Origin allow-list plus a per-session synchronizer CSRF token (stronger than double-submit because it is bound to the session and stored hashed), session revocation on password reset/change, hashed single-use expiring invite and reset tokens. Trade-offs: lockout lets someone lock a known account for 15 minutes; throttler counters are per instance until Redis; customer authentication follows in step 2.8.
+
 - Separate staff and customer authentication and authorization policies.
 - Password hashing: **Argon2id** (or another approved secure algorithm).
 - **Staff two-factor authentication** (TOTP; recovery codes) — mandatory.
@@ -37,6 +39,10 @@ Append-only audit log: actor, scope, action, target, before/after (redacted), IP
 ## Operations [Approved]
 
 Automated backups; dependency vulnerability monitoring (e.g., GitHub Dependabot/audit in CI); secure production configuration; private database access; Cloudflare WAF; Sentry and structured logging with redaction.
+
+## Phase 2 verification (2026-11-25)
+
+`pnpm audit --prod` clean; repository scan finds no committed secrets or default credentials; API and admin security headers checked; login is throttled (429 under load) and unauthenticated admin routes answer 401; Argon2id costs about 50 ms per hash. Open: admin Content-Security-Policy, per-instance throttling until Redis, moderate dev-tooling advisories in the Nest CLI. Details: [PROGRESS.md](PROGRESS.md).
 
 ## Threat priorities
 

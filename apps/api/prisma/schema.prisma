@@ -1,5 +1,6 @@
-// Phase 1: Prisma is configured only. NO business models exist yet.
-// The final schema (docs/DATABASE.md) must be designed and reviewed before models are added.
+// Phase 2 step 2.2: reference data and tenancy (docs/PHASE-2-SCHEMA-DRAFT.md, approved).
+// Constraints Prisma cannot express (checks, partial indexes, triggers, row-level security) are
+// hand-written in the migration SQL. Identity, RBAC, audit and customer tables arrive in later steps.
 
 generator client {
   provider     = "prisma-client"
@@ -9,4 +10,486 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum TextDirection {
+  LTR
+  RTL
+}
+
+enum ActiveStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum MarketStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+}
+
+/// ISO 4217 currency (reference data; read-only for the runtime role).
+model Currency {
+  code            String           @id @db.Char(3)
+  name            String
+  symbol          String
+  minorUnitDigits Int              @map("minor_unit_digits") @db.SmallInt
+  markets         MarketCurrency[]
+
+  @@map("currency")
+}
+
+/// Interface/content language (reference data; read-only for the runtime role).
+model Language {
+  code       String           @id
+  name       String
+  nativeName String           @map("native_name")
+  direction  TextDirection
+  markets    MarketLanguage[]
+
+  @@map("language")
+}
+
+/// Country (reference data; read-only for the runtime role).
+model Country {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  iso2        String   @unique @db.Char(2)
+  iso3        String   @unique @db.Char(3)
+  name        String
+  callingCode String?  @map("calling_code")
+  markets     Market[]
+  branches    Branch[]
+
+  @@map("country")
+}
+
+model Brand {
+  id              String                @id @default(uuid(7)) @db.Uuid
+  slug            String                @unique
+  name            String
+  legalEntityName String?               @map("legal_entity_name")
+  status          ActiveStatus          @default(ACTIVE)
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
+  domains         BrandDomain[]
+  markets         Market[]
+  assignments     StaffRoleAssignment[]
+  customers       Customer[]
+
+  @@map("brand")
+}
+
+/// A brand's presence in a country. Owns currencies, languages and timezone.
+model Market {
+  id          String                @id @default(uuid(7)) @db.Uuid
+  brandId     String                @map("brand_id") @db.Uuid
+  countryId   String                @map("country_id") @db.Uuid
+  code        String
+  status      MarketStatus          @default(DRAFT)
+  timezone    String
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
+  brand       Brand                 @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  country     Country               @relation(fields: [countryId], references: [id], onDelete: Restrict)
+  currencies  MarketCurrency[]
+  languages   MarketLanguage[]
+  domains     BrandDomain[]
+  branches    BranchMarket[]
+  assignments StaffRoleAssignment[]
+
+  @@unique([brandId, countryId])
+  @@unique([brandId, code])
+  @@unique([id, brandId])
+  @@unique([id, countryId])
+  @@map("market")
+}
+
+model MarketCurrency {
+  marketId     String   @map("market_id") @db.Uuid
+  currencyCode String   @map("currency_code") @db.Char(3)
+  isDefault    Boolean  @default(false) @map("is_default")
+  market       Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  currency     Currency @relation(fields: [currencyCode], references: [code], onDelete: Restrict)
+
+  @@id([marketId, currencyCode])
+  @@map("market_currency")
+}
+
+model MarketLanguage {
+  marketId     String   @map("market_id") @db.Uuid
+  languageCode String   @map("language_code")
+  isDefault    Boolean  @default(false) @map("is_default")
+  sortOrder    Int      @default(0) @map("sort_order") @db.SmallInt
+  market       Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  language     Language @relation(fields: [languageCode], references: [code], onDelete: Restrict)
+
+  @@id([marketId, languageCode])
+  @@map("market_language")
+}
+
+model BrandDomain {
+  id                  String   @id @default(uuid(7)) @db.Uuid
+  brandId             String   @map("brand_id") @db.Uuid
+  hostname            String   @unique
+  marketId            String?  @map("market_id") @db.Uuid
+  defaultLanguageCode String?  @map("default_language_code")
+  isPrimary           Boolean  @default(false) @map("is_primary")
+  redirectToPrimary   Boolean  @default(false) @map("redirect_to_primary")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  brand               Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  market              Market?  @relation(fields: [marketId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@index([brandId])
+  @@map("brand_domain")
+}
+
+/// Physical branch. A branch may serve several brands/markets of its own country (see BranchMarket).
+model Branch {
+  id           String                @id @default(uuid(7)) @db.Uuid
+  code         String                @unique
+  name         String
+  countryId    String                @map("country_id") @db.Uuid
+  addressLine1 String?               @map("address_line1")
+  addressLine2 String?               @map("address_line2")
+  city         String?
+  area         String?
+  latitude     Decimal?              @db.Decimal(9, 6)
+  longitude    Decimal?              @db.Decimal(9, 6)
+  phone        String?
+  email        String?
+  timezone     String
+  status       ActiveStatus          @default(ACTIVE)
+  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
+  country      Country               @relation(fields: [countryId], references: [id], onDelete: Restrict)
+  markets      BranchMarket[]
+  assignments  StaffRoleAssignment[]
+
+  @@unique([id, countryId])
+  @@index([countryId, status])
+  @@map("branch")
+}
+
+/// Links a branch to a market. Composite foreign keys force branch and market to share a country.
+model BranchMarket {
+  branchId  String       @map("branch_id") @db.Uuid
+  marketId  String       @map("market_id") @db.Uuid
+  countryId String       @map("country_id") @db.Uuid
+  status    ActiveStatus @default(ACTIVE)
+  branch    Branch       @relation(fields: [branchId, countryId], references: [id, countryId], onDelete: Cascade)
+  market    Market       @relation(fields: [marketId, countryId], references: [id, countryId], onDelete: Cascade)
+
+  @@id([branchId, marketId])
+  @@index([marketId])
+  @@map("branch_market")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Phase 2 step 2.4: staff identity (core columns; credentials/MFA/sessions arrive in step 2.6),
+// permission catalog, roles and scoped role assignments.
+// ---------------------------------------------------------------------------------------------
+
+enum StaffStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum RoleKind {
+  SYSTEM
+  CUSTOM
+}
+
+/// Staff are global users (D2-06); what they may touch is decided by their role assignments.
+model StaffUser {
+  id            String                @id @default(uuid(7)) @db.Uuid
+  /// Always stored lowercase (check constraint).
+  email         String
+  fullName      String                @map("full_name")
+  phone         String?
+  status        StaffStatus           @default(INVITED)
+  /// Argon2id hash; null until the invite is accepted.
+  passwordHash  String?               @map("password_hash")
+  mfaEnrolledAt DateTime?             @map("mfa_enrolled_at") @db.Timestamptz()
+  lastLoginAt   DateTime?             @map("last_login_at") @db.Timestamptz()
+  totp          StaffMfaTotp?
+  recoveryCodes StaffRecoveryCode[]
+  sessions      StaffSession[]
+  tokens        StaffToken[]
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
+  assignments   StaffRoleAssignment[] @relation("AssignmentStaff")
+  granted       StaffRoleAssignment[] @relation("AssignmentGrantedBy")
+
+  @@index([status])
+  @@map("staff_user")
+}
+
+/// Permission catalog; defined in code and synced by the owner role (read-only at runtime).
+model Permission {
+  key         String           @id
+  groupName   String           @map("group_name")
+  description String
+  isSensitive Boolean          @default(false) @map("is_sensitive")
+  roles       RolePermission[]
+
+  @@map("permission")
+}
+
+/// SYSTEM roles are the 12 templates (immutable at runtime); CUSTOM roles are global definitions (D2-07).
+model Role {
+  id          String                @id @default(uuid(7)) @db.Uuid
+  name        String
+  description String?
+  kind        RoleKind              @default(CUSTOM)
+  systemKey   String?               @unique @map("system_key")
+  isLocked    Boolean               @default(false) @map("is_locked")
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
+  permissions RolePermission[]
+  assignments StaffRoleAssignment[]
+
+  @@map("role")
+}
+
+model RolePermission {
+  roleId        String     @map("role_id") @db.Uuid
+  permissionKey String     @map("permission_key")
+  role          Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permissionKey], references: [key], onDelete: Restrict)
+
+  @@id([roleId, permissionKey])
+  @@map("role_permission")
+}
+
+/// A role granted to a staff user within a scope. A null brand/market/branch means "any".
+model StaffRoleAssignment {
+  id          String     @id @default(uuid(7)) @db.Uuid
+  staffUserId String     @map("staff_user_id") @db.Uuid
+  roleId      String     @map("role_id") @db.Uuid
+  brandId     String?    @map("brand_id") @db.Uuid
+  marketId    String?    @map("market_id") @db.Uuid
+  branchId    String?    @map("branch_id") @db.Uuid
+  grantedById String?    @map("granted_by_id") @db.Uuid
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  revokedAt   DateTime?  @map("revoked_at") @db.Timestamptz()
+  expiresAt   DateTime?  @map("expires_at") @db.Timestamptz()
+  staffUser   StaffUser  @relation("AssignmentStaff", fields: [staffUserId], references: [id], onDelete: Restrict)
+  grantedBy   StaffUser? @relation("AssignmentGrantedBy", fields: [grantedById], references: [id], onDelete: Restrict)
+  role        Role       @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  brand       Brand?     @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  market      Market?    @relation(fields: [marketId, brandId], references: [id, brandId], onDelete: Restrict)
+  branch      Branch?    @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  @@index([staffUserId])
+  @@index([roleId])
+  @@map("staff_role_assignment")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Phase 2 step 2.5: append-only audit log. No foreign keys on purpose: audit rows must outlive
+// (and never block) changes to the records they describe.
+// ---------------------------------------------------------------------------------------------
+
+enum AuditActorType {
+  STAFF
+  CUSTOMER
+  SYSTEM
+  GUEST
+}
+
+enum AuditOutcome {
+  SUCCESS
+  DENIED
+  FAILED
+}
+
+model AuditLog {
+  id         BigInt         @id @default(autoincrement())
+  occurredAt DateTime       @default(now()) @map("occurred_at") @db.Timestamptz()
+  actorType  AuditActorType @map("actor_type")
+  actorId    String?        @map("actor_id") @db.Uuid
+  brandId    String?        @map("brand_id") @db.Uuid
+  marketId   String?        @map("market_id") @db.Uuid
+  branchId   String?        @map("branch_id") @db.Uuid
+  action     String
+  targetType String         @map("target_type")
+  targetId   String?        @map("target_id")
+  outcome    AuditOutcome   @default(SUCCESS)
+  before     Json?
+  after      Json?
+  ip         String?
+  userAgent  String?        @map("user_agent")
+  requestId  String?        @map("request_id")
+
+  @@index([occurredAt])
+  @@index([brandId, id])
+  @@index([actorType, actorId, id])
+  @@index([targetType, targetId])
+  @@map("audit_log")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Phase 2 step 2.6: staff authentication. Tokens and codes are stored hashed; TOTP secrets are
+// encrypted (AES-256-GCM key ring).
+// ---------------------------------------------------------------------------------------------
+
+enum StaffTokenType {
+  INVITE
+  RESET
+}
+
+model StaffMfaTotp {
+  staffUserId      String    @id @map("staff_user_id") @db.Uuid
+  secretCiphertext String    @map("secret_ciphertext")
+  confirmedAt      DateTime? @map("confirmed_at") @db.Timestamptz()
+  /// Highest accepted 30-second time step; a code can only be used once (replay protection).
+  lastUsedStep     BigInt?   @map("last_used_step")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  staffUser        StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+
+  @@map("staff_mfa_totp")
+}
+
+model StaffRecoveryCode {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  staffUserId String    @map("staff_user_id") @db.Uuid
+  codeHash    String    @map("code_hash")
+  usedAt      DateTime? @map("used_at") @db.Timestamptz()
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  staffUser   StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+
+  @@unique([staffUserId, codeHash], map: "staff_recovery_code_hash_key")
+  @@index([staffUserId])
+  @@map("staff_recovery_code")
+}
+
+/// A session is "pending" until mfaVerifiedAt is set; pending sessions grant no admin access.
+model StaffSession {
+  id                String    @id @default(uuid(7)) @db.Uuid
+  staffUserId       String    @map("staff_user_id") @db.Uuid
+  tokenHash         String    @unique @map("token_hash")
+  csrfHash          String    @map("csrf_hash")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  lastSeenAt        DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz()
+  idleExpiresAt     DateTime  @map("idle_expires_at") @db.Timestamptz()
+  absoluteExpiresAt DateTime  @map("absolute_expires_at") @db.Timestamptz()
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz()
+  mfaVerifiedAt     DateTime? @map("mfa_verified_at") @db.Timestamptz()
+  stepUpUntil       DateTime? @map("step_up_until") @db.Timestamptz()
+  ip                String?
+  userAgent         String?   @map("user_agent")
+  staffUser         StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+
+  @@index([staffUserId])
+  @@index([absoluteExpiresAt], map: "staff_session_expiry_idx")
+  @@map("staff_session")
+}
+
+model StaffToken {
+  id          String         @id @default(uuid(7)) @db.Uuid
+  staffUserId String         @map("staff_user_id") @db.Uuid
+  type        StaffTokenType
+  tokenHash   String         @unique @map("token_hash")
+  expiresAt   DateTime       @map("expires_at") @db.Timestamptz()
+  usedAt      DateTime?      @map("used_at") @db.Timestamptz()
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  staffUser   StaffUser      @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+
+  @@index([staffUserId, type])
+  @@index([expiresAt], map: "staff_token_expiry_idx")
+  @@map("staff_token")
+}
+
+/// Failed-attempt counters keyed by a hash of (realm, account) and (realm, ip, account); unknown
+/// accounts are tracked too, so lockout behaviour does not reveal whether an account exists.
+model AuthAttempt {
+  keyHash       String    @id @map("key_hash")
+  failures      Int       @default(0)
+  lockLevel     Int       @default(0) @map("lock_level")
+  lockedUntil   DateTime? @map("locked_until") @db.Timestamptz()
+  lastFailureAt DateTime  @default(now()) @map("last_failure_at") @db.Timestamptz()
+
+  @@map("auth_attempt")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Phase 2 step 2.8: customers. Brand-scoped identity (D2-06): the same email is a separate
+// account on every brand. Row-level security applies to all three tables.
+// ---------------------------------------------------------------------------------------------
+
+enum CustomerStatus {
+  ACTIVE
+  SUSPENDED
+  DELETION_REQUESTED
+}
+
+enum CustomerTokenType {
+  VERIFY_EMAIL
+  RESET
+}
+
+model Customer {
+  id                     String            @id @default(uuid(7)) @db.Uuid
+  brandId                String            @map("brand_id") @db.Uuid
+  /// Always lowercase (check constraint); unique per brand.
+  email                  String
+  emailVerifiedAt        DateTime?         @map("email_verified_at") @db.Timestamptz()
+  phone                  String?
+  passwordHash           String            @map("password_hash")
+  fullName               String            @map("full_name")
+  preferredLanguage      String?           @map("preferred_language")
+  status                 CustomerStatus    @default(ACTIVE)
+  marketingConsent       Boolean           @default(false) @map("marketing_consent")
+  marketingConsentAt     DateTime?         @map("marketing_consent_at") @db.Timestamptz()
+  marketingConsentSource String?           @map("marketing_consent_source")
+  deletionRequestedAt    DateTime?         @map("deletion_requested_at") @db.Timestamptz()
+  lastLoginAt            DateTime?         @map("last_login_at") @db.Timestamptz()
+  createdAt              DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
+  brand                  Brand             @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  sessions               CustomerSession[]
+  tokens                 CustomerToken[]
+
+  @@unique([brandId, email])
+  @@unique([id, brandId])
+  @@index([brandId, status])
+  @@map("customer")
+}
+
+model CustomerSession {
+  id                String    @id @default(uuid(7)) @db.Uuid
+  brandId           String    @map("brand_id") @db.Uuid
+  customerId        String    @map("customer_id") @db.Uuid
+  tokenHash         String    @unique @map("token_hash")
+  csrfHash          String    @map("csrf_hash")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  lastSeenAt        DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz()
+  idleExpiresAt     DateTime  @map("idle_expires_at") @db.Timestamptz()
+  absoluteExpiresAt DateTime  @map("absolute_expires_at") @db.Timestamptz()
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz()
+  ip                String?
+  userAgent         String?   @map("user_agent")
+  customer          Customer  @relation(fields: [customerId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([absoluteExpiresAt], map: "customer_session_expiry_idx")
+  @@map("customer_session")
+}
+
+model CustomerToken {
+  id         String            @id @default(uuid(7)) @db.Uuid
+  brandId    String            @map("brand_id") @db.Uuid
+  customerId String            @map("customer_id") @db.Uuid
+  type       CustomerTokenType
+  tokenHash  String            @unique @map("token_hash")
+  expiresAt  DateTime          @map("expires_at") @db.Timestamptz()
+  usedAt     DateTime?         @map("used_at") @db.Timestamptz()
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  customer   Customer          @relation(fields: [customerId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@index([customerId, type])
+  @@index([expiresAt], map: "customer_token_expiry_idx")
+  @@map("customer_token")
 }

@@ -4,7 +4,5 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['<rootDir>/src/**/*.e2e-spec.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
-  transform: {
-    '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json', diagnostics: true }],
-  },
+  ...require('./jest.shared.cjs'),
 };

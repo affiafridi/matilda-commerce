@@ -3,7 +3,7 @@
 Multi-brand, multi-market, multi-branch commerce platform (modular monolith, pnpm monorepo).
 Project rules: [CLAUDE.md](CLAUDE.md). Documentation index: [docs/README.md](docs/README.md).
 
-**Status:** Phase 1 (Project Foundation) complete. No business modules exist yet.
+**Status:** Phase 1 complete; Phase 2 (Multi-Store and Access Foundation) in progress, steps 2.1-2.2 done. No business modules exist yet.
 
 ## Prerequisites
 
@@ -69,11 +69,13 @@ Run one app: `pnpm dev:api`, `pnpm dev:storefront`, `pnpm dev:admin`.
 pnpm check
 ```
 
-Runs format check, lint, type-check, tests and production builds. Individually: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`.
+Runs format check, lint, type-check, tests and production builds (no database needed). `pnpm test:int` runs the database integration tests against `matilda_test` (needs `pnpm docker:up`); `pnpm check:full` runs both. After pulling Phase 2 changes, run `pnpm docker:up` once (it creates the `matilda_app` / `matilda_owner` roles) and refresh `apps/api/.env` from `apps/api/.env.example`, filling the two secret placeholders. Individually: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`.
 
 ## Database (Prisma)
 
-Prisma is configured and connects to the Docker database (`/api/v1/health/ready` returns 200), but has **no models or migrations yet**; the schema must be designed and reviewed first ([docs/DATABASE.md](docs/DATABASE.md)). `prisma migrate status` reports "No migration found" until Phase 2.
+Prisma connects to the Docker database as the least-privilege role `matilda_app`; migrations run as `matilda_owner`. Phase 2 step 2.2 added the tenancy schema ([docs/PHASE-2-SCHEMA-DRAFT.md](docs/PHASE-2-SCHEMA-DRAFT.md)). After `pnpm docker:up`: `pnpm --filter @matilda/api db:deploy`, `pnpm build`, then `pnpm --filter @matilda/api db:seed dev` (local data) or `db:seed bootstrap` (real brands/domains only).
+
+**First admin (step 2.6):** there are no default credentials. After seeding, create the first Super Admin with `pnpm --filter @matilda/api db:create-super-admin -- --email you@your-domain --name "Your Name"`. It prints a one-time link (valid 72 hours) to `ADMIN_BASE_URL/accept-invite?token=...`; the person sets a password and enrolls an authenticator app. In staging/production set `PASSWORD_PEPPER` (32+ random characters; keep it secret and stable, because changing it invalidates all passwords).
 
 ```bash
 pnpm db:generate

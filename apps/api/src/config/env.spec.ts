@@ -1,4 +1,7 @@
+import { randomBytes } from 'node:crypto';
 import { loadEnv } from './env';
+
+const key = (): string => randomBytes(32).toString('base64');
 
 describe('loadEnv', () => {
   it('applies defaults', () => {
@@ -10,8 +13,16 @@ describe('loadEnv', () => {
   });
 
   it('disables swagger by default in production', () => {
-    expect(loadEnv({ NODE_ENV: 'production' }).SWAGGER_ENABLED).toBe(false);
-    expect(loadEnv({ NODE_ENV: 'production', SWAGGER_ENABLED: 'true' }).SWAGGER_ENABLED).toBe(true);
+    const base = {
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://x',
+      APP_ENCRYPTION_KEYS: `1:${key()}`,
+      APP_ENCRYPTION_ACTIVE_KEY: '1',
+      TRUSTED_PROXY_SECRET: 'x'.repeat(32),
+      PASSWORD_PEPPER: 'p'.repeat(32),
+    };
+    expect(loadEnv(base).SWAGGER_ENABLED).toBe(false);
+    expect(loadEnv({ ...base, SWAGGER_ENABLED: 'true' }).SWAGGER_ENABLED).toBe(true);
   });
 
   it('parses and trims CORS origins', () => {
@@ -23,5 +34,18 @@ describe('loadEnv', () => {
 
   it('fails fast on invalid values', () => {
     expect(() => loadEnv({ PORT: 'not-a-port' })).toThrow(/Invalid environment configuration/);
+  });
+
+  it('requires secrets and database in production and staging', () => {
+    for (const NODE_ENV of ['production', 'staging']) {
+      expect(() => loadEnv({ NODE_ENV })).toThrow(/DATABASE_URL.*Required/s);
+    }
+  });
+
+  it('validates the encryption key ring', () => {
+    expect(() => loadEnv({ APP_ENCRYPTION_KEYS: '1:short' })).toThrow(/32-byte/);
+    expect(() =>
+      loadEnv({ APP_ENCRYPTION_KEYS: `1:${key()}`, APP_ENCRYPTION_ACTIVE_KEY: '2' }),
+    ).toThrow(/Active key version/);
   });
 });

@@ -33,6 +33,8 @@ Thumbs.db
 
 # test artifacts
 playwright-report/
+apps/admin/.next-e2e/
+apps/admin/e2e/.tmp/
 test-results/
 
 # next

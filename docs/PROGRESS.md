@@ -2,9 +2,91 @@
 
 Last updated: 2026-11-25
 
+## Phase 2 status (2026-11-25): IN PROGRESS
+
+Phase 1 was approved and pushed by the owner. The owner approved the Phase 2 plan and all decisions D2-01 to D2-20 ([PHASE-2-PLAN.md](PHASE-2-PLAN.md)).
+
+| Step | Status |
+|---|---|
+| 2.1 Foundations and test infrastructure | **Done and verified** |
+| 2.2 Tenancy schema, RLS spike, scoped data access | **Done** (DDL approved by the owner, migration `tenancy` applied to dev and test, RLS enforced, scoped data access `withScope`, seed CLI, 29 DB integration tests). Details: [PHASE-2-SCHEMA-DRAFT.md](PHASE-2-SCHEMA-DRAFT.md) |
+| 2.3 Tenant resolution and storefront context | **Done**: `TenantResolver` (cache + invalidation), trusted-host handling, `GET /api/v1/storefront/context`, per-brand CORS; 10 unit + 6 HTTP + 4 DB tests |
+| 2.4 Permission catalog, roles, authorization engine | **Done**: 52-key catalog, 12 system roles (default sets PROPOSED, need your sign-off D2-08), custom roles, scoped assignments, fail-closed global `PermissionsGuard`, escalation and last-Super-Admin safeguards; 52 unit + 14 DB tests added |
+| 2.5 Audit logging | **Done**: append-only `audit_log` (privileges + triggers + row-level security), `AuditService` (in-transaction `record`, standalone for denials, scoped paged `query`), redaction, denial auditing (guard for sensitive routes, interceptor for in-handler denials), role/assignment changes audited; EXPLAIN-verified indexes; 4 unit + 22 DB + 2 HTTP tests added |
+| 2.6 Staff authentication ⛔ | **Done, approved by the owner**: sessions, Argon2id, mandatory TOTP + recovery codes, lockout, CSRF, step-up, invite/reset, Super Admin CLI; see below |
+| 2.7 Admin management APIs | **Done**: brands/domains, markets, branches, staff, assignments, roles, permissions, audit query, admin context; customers read-only deferred to 2.8's tables; 61 DB-backed HTTP tests |
+| 2.8 Customer authentication and guest actor | **Done**: brand-scoped accounts with row-level security, register/verify/login/logout/reset/me/deletion request, admin read-only customers; 21 DB-backed tests |
+| 2.9 Admin design brief and app shell | **Done, approved by the owner**: brief approved with final direction ([design/admin-brief.html](design/admin-brief.html)); sign-in, 2FA verify/enroll, recovery codes, accept invite, forgot/reset password, account security, shell with collapsible navigation, same-origin proxy, CSRF/step-up handling |
+| 2.10 Switchers and management screens | **Done, approved by the owner** (page content now uses the full width): brand → market → branch switchers wired to `/me/context`; screens for brands and domains, markets, branches, employees and assignments, roles and permissions, audit log and customers; Playwright E2E (9 tests) |
+| 2.11 Hardening, verification and documentation | **Done, approved by the owner** (see below) |
+
+### Step 2.1 delivered
+- Docker bootstrap (`pnpm docker:up` now also runs `pnpm db:bootstrap`): roles `matilda_owner` (DDL/migrations) and `matilda_app` (runtime, DML only, NOBYPASSRLS) and database `matilda_test`; API now runs as `matilda_app`, Prisma CLI as `matilda_owner` (`MIGRATION_DATABASE_URL`).
+- Per-request context (`nestjs-cls`), AES-256-GCM `EncryptionService` with key ring and rotation, token/hash helpers, cookie and CSRF utilities (distinct staff/customer cookie names, `__Host-` when secure), `MailPort` with a console adapter, UUIDv7 helper, permission-key type, stricter env validation (secrets required in staging/production).
+- DB integration test setup (`pnpm test:int`, `pnpm check:full`): role privilege tests and the RLS spike (11 tests).
+- New dependency: `nestjs-cls` only (others are introduced at the steps that need them).
+- Verification: `pnpm check:full` exit 0 (API 36 unit + 4 HTTP + 11 DB integration tests); API boots as `matilda_app` and `/health/ready` returns 200.
+
+Nothing in Phase 2 has changed `schema.prisma` or created a migration yet.
+
+### Step 2.6 delivered (owner review gate)
+- **Staff authentication** (`apps/api/src/modules/staff-auth`): opaque server-side sessions (random token in an HttpOnly, SameSite=Lax, Domain-less cookie, `__Host-` and Secure in staging/production; only the SHA-256 hash is stored); Argon2id passwords (19 MiB, 2 passes, optional `PASSWORD_PEPPER`, required in staging/production), policy: 12 to 128 characters, common/low-variety/email-derived passwords rejected; mandatory TOTP 2FA (secrets AES-256-GCM encrypted and bound to the user, ±1 step tolerance, replay blocked via `last_used_step`); 10 single-use hashed recovery codes; step-up (10 minutes) enforced by the guard for every sensitive permission (403 `STEP_UP_REQUIRED`); idle 30 min / absolute 12 h sessions; pending (password-only) sessions live 15 min, grant nothing and are rotated at 2FA completion.
+- **Brute-force protection**: `auth_attempt` table, 5 failures lock 15 minutes (doubling, capped at 24 h), keyed by account and by IP+account, identical for unknown accounts; uniform `INVALID_CREDENTIALS` with a dummy hash verification; plus `@nestjs/throttler` (300/min global, 10/min on auth routes, 5/min forgot-password).
+- **CSRF**: Origin allow-list (`CORS_ORIGINS`) on every cookie-authenticated mutation, plus a per-session synchronizer token in the `X-CSRF-Token` header (returned by login/2FA responses, stored hashed).
+- **Lifecycle**: invitation (72 h) and password reset (1 h) links, hashed and single-use; password reset revokes all sessions, password change revokes all but the current one; logout and logout-all; `GET /api/v1/admin/me`, `GET /api/v1/admin/auth/session`.
+- **Guard**: `PermissionsGuard` now authenticates the session cookie itself (no trust in a pre-set actor), supports `@AuthenticatedStaff()` routes and keeps the 401/403 semantics.
+- **Super Admin bootstrap CLI**: `pnpm build` then `pnpm --filter @matilda/api db:create-super-admin -- --email <address> --name "<full name>"` prints a one-time invitation link (no default credentials exist). It refuses when an active Super Admin exists unless `--force-recovery` is passed; both paths are audited as SYSTEM.
+- New dependencies: argon2, otplib, qrcode, cookie-parser, @nestjs/throttler. New migration `staff_auth`.
+- Verification: `pnpm check` exit 0 (API 120 unit + 22 HTTP tests); `pnpm test:int` 88 passing (19 new staff-auth tests through the real HTTP stack and database, including the full invite → password → 2FA → access flow and the CLI).
+- Known issues / notes: (1) `pnpm audit --prod` is clean: the high advisory in `effect` was fixed in 2.11 with a pnpm override to 3.22.5. (2) Throttler counters are per API instance (in-memory); a shared store arrives with Redis. (3) The database lockout lets someone lock a known account for 15 minutes (accepted trade-off; recovery is the reset flow or a Super Admin). (4) Forgot-password answers 202 uniformly, but response time for existing accounts is slightly longer (mail dispatch); move to a queue when background jobs exist. (5) No email provider yet: invite and reset links go to the console mail adapter and are shared manually (D2-11). (6) No admin UI for any of this yet.
+- Not done in 2.6 (by design): staff management endpoints (2.7), device/session list UI, customer authentication (2.8).
+
+### Step 2.7 delivered
+- **Admin management APIs** under `/api/v1/admin` (module `modules/admin`, all tagged in Swagger): brands and domains, markets (currencies/languages), branches and market links, staff (invite, reinvite, profile, suspend/reactivate/deactivate), assignments (grant/revoke), roles (list/get/create/update/delete/clone), the permission catalog, the audit log query, and `GET /admin/me/context` (assignments, reachable brands, effective permissions; validates the optional `X-Admin-Brand` header against the actor's grants).
+- **Authorization model**: the route declares the permission (guard: session, Origin, CSRF, step-up for sensitive permissions); the service re-checks the scope of the exact record. Lists return only in-scope rows (database row-level security for brand data, plus the application filter for market/branch-restricted grants); out-of-scope records answer 404, never 403, so existence is not leaked. Every mutation writes an audit row in the same transaction.
+- **Rules worth knowing**: creating brands needs a platform-wide `brands.manage`; a shared branch can be edited only by someone holding `branches.manage` over every market it serves; a staff member is visible with `users.view` over any of their assignments but changeable only when `users.manage` covers all of them (staff with no assignment are platform-only); nobody changes their own status; the last active Super Admin is protected; suspension/deactivation revokes sessions at once; invitation links are returned once in the API response (no mail provider yet, D2-11); domain changes invalidate the tenant cache.
+- Verification: `pnpm check` exit 0 (API 120 unit + 22 HTTP); `pnpm test:int` 149 passing (61 new admin tests: 401/403 for all 34 routes, scope matrix, step-up, audit rows, Swagger coverage, context header).
+- **Deferred**: customers read-only endpoint (customer tables arrive in step 2.8; the endpoint will be added there). Staff lists filter in memory after loading (fine for tens to hundreds of staff; paginate in SQL if that grows).
+
+### Step 2.11 delivered (hardening and verification)
+
+- **Dependency audit**: `pnpm audit --prod` reports no vulnerabilities after pinning `effect` to 3.22.5 (override in `pnpm-workspace.yaml`). The full audit still lists 5 moderate findings in `glob` and `minimatch` inside the Nest CLI build tooling (dev only, not shipped); they need a Nest CLI major upgrade and are left open.
+- **Clean database**: a scratch database created from nothing, `prisma migrate deploy` applied all 6 migrations, and the `reference`, `bootstrap` and `dev` seed tiers ran twice with identical results (3 brands, 6 domains, 3 markets, 1 test branch, 12 roles, 52 permissions, 0 staff); the scratch database was dropped.
+- **Suites**: `pnpm check` green (120 API unit, 22 API e2e, 19 admin unit), `pnpm test:int` 173 passing (cross-brand and RLS isolation, tenancy, staff and customer authentication, admin management, audit, database roles), Playwright E2E 9 passing.
+- **Load smoke** (`apps/api/scripts/load-smoke.mjs`, local only, 200 requests at 10 concurrent against the dev API): routes without a session answered 401 in about 13 ms at p50 and 16 ms at p95; wrong-credential logins were throttled (10 answered 401, 190 answered 429); public health 506 requests per second. Argon2id (19 MiB, 2 passes) takes about 50 ms per hash.
+- **Checks**: repository scan finds no secrets (only `.env.example` files are tracked, no default credentials); API sends HSTS, CSP, `nosniff`, `no-referrer`; admin sends frame, `nosniff`, referrer, permissions and no-store headers.
+- **Open issues (honest list)**: the admin app has no Content-Security-Policy yet (Next.js needs a nonce setup; planned with the storefront hardening); Throttler counters are per API instance until Redis; no email provider (links are shared manually); D2-08 role defaults still await owner sign-off; real branches (D2-12) and the Matilda logo are not supplied; the E2E suite is not in `pnpm check`; the DB-backed suites need `pnpm docker:up` and are not run by CI yet because no CI exists; the Nest CLI moderate advisories above.
+
+### Step 2.10 delivered
+
+- **Switchers**: brand → market → branch in the top bar, fed by `/admin/me/context`. A level with nothing to choose is shown locked; "All brands" appears only for people whose grants cover every brand. The brand choice is sent to the API as `X-Admin-Brand`, which the API validates (403 when the person has no grant for that brand), so the interface is a convenience and never the control.
+- **Screens** (`apps/admin/src/app/(app)`): brands and domains (list, detail, domains), markets (currencies and languages), branches (including market links), employees (list with search and status filter, invite, detail, role assignment and revocation, suspend, deactivate, resend invitation), roles and permissions (read-only matrix, role editor with grouped permissions, clone, delete), audit log (filters, keyset "load more", entry drawer) and customers (read-only). Create and edit forms use drawers; destructive actions use a confirmation dialog; sensitive actions use the step-up dialog from 2.9.
+- **Navigation**: every item is now built and is shown only when the person holds the permission, so a scoped Catalog Manager sees no Employees, Roles, Audit log or Brands, and a Branch Manager sees only Branches, Customers and Employees if granted.
+- **Playwright E2E** (`apps/admin/e2e`, `pnpm --filter @matilda/admin test:e2e`): 9 tests against a real API on port 4100 and the admin on 3101, on the TEST database only (the launcher refuses to start without it). Covers sign-in with two-factor and sign-out, the signed-out redirect, Super Admin switching All and one brand, Branch Manager locked to one branch with a forged `X-Admin-Brand` and other admin routes refused by the API, Catalog Manager navigation and API refusal, role create, edit, clone and delete, system roles read-only, employee invite, role assignment and revocation, audit visibility, and employee search and filter.
+- **Bug found by the E2E run and fixed**: after inviting an employee the screen read the wrong field of the response (`staff.id`) and stayed on the list.
+- **Not done in 2.10 (by design or limitation)**: country is a two-letter text field because there is no countries endpoint yet; tables are plain accessible tables (no TanStack Table); the logo is still the text wordmark; no storefront or business screens; Lighthouse CLI not run; the E2E suite runs on the Windows Edge browser by default (set `PLAYWRIGHT_CHANNEL` elsewhere) and is not yet part of `pnpm check`.
+
+### Step 2.9 delivered
+
+- **Design**: owner approved the brief with the final direction (neutral white and light-grey admin, near-black actions, Inter, 4 to 6px radii, collapsible sidebar, full-width content, ready for dark mode and RTL). Recorded as D2-21 in [DECISIONS.md](DECISIONS.md); tokens and screens in [design/admin-brief.html](design/admin-brief.html).
+- **Admin app** (`apps/admin`): sign-in, two-factor verify and enrolment (QR, manual key, recovery codes shown once), recovery-code sign-in, accept invitation, forgot and reset password, account security (change password, sign out everywhere), signed-in shell (collapsible sidebar, mobile drawer, read-only scope label, account menu, skip link), step-up dialog, session-ended redirect with a safe `next`.
+- **Wiring**: `/api/*` is proxied to the API by Next.js (same origin, host-only cookie); the CSRF token is held in memory and re-issued after a reload; a rejected token is refreshed and retried once; `STEP_UP_REQUIRED` opens the code dialog and retries once. New API route `POST /admin/auth/csrf` supports the reload case.
+- **Navigation**: permission-driven model in `src/lib/nav.ts`; only built modules the person holds the permission for are shown. Today that is Home only; the Phase 2 management screens (and their menu entries) arrive in step 2.10.
+- **Verified** in the browser on `localhost:3001`: invite → password → 2FA enrolment → recovery codes → shell; sign out and sign in with 2FA; wrong password message; reload then a mutation (CSRF re-issue); step-up dialog then retry; revoked session redirects to sign-in with `next`; axe (WCAG 2.2 AA and best practice) reports no violations on sign-in, forgot password, home and security pages, with the sidebar collapsed and the account menu open; mobile drawer.
+- **Not done in 2.9 (by design)**: brand/market/branch switchers and the management screens (2.10); Playwright E2E (2.10); logo (file not supplied, text wordmark in use); Lighthouse CLI was not run (axe, which Lighthouse uses for accessibility, was).
+
+### Step 2.8 delivered
+- **Customer authentication API** (`modules/customer-auth`), brand from the host only: `POST /customer/auth/register | verify-email | login | forgot-password | reset-password`; signed-in: `GET/PATCH /customer/me`, `POST /customer/auth/logout`, `/customer/me/verification-email`, `/customer/me/password`, `/customer/me/deletion-request`.
+- **Isolation**: tables `customer`, `customer_session`, `customer_token` (migration `customer_auth`) with row-level security on brand, `UNIQUE(brand_id, email)` (the same email is a separate account on each brand), composite foreign keys so a session or token can never point at another brand's customer. Every query runs in the resolved brand's database scope; a session cookie replayed on another brand or host answers 401.
+- **Security**: opaque hashed sessions (30 days idle, 90 days absolute; `matilda_customer` cookie, HttpOnly, SameSite=Lax, `__Host-` and Secure in staging/production), Argon2id (shared pepper), 10-character minimum, lockout per brand and account (5 failures, 15 minutes doubling), uniform login errors, registration and forgot-password answer 202 whether or not the email exists (existing addresses get an "already registered" mail), single-use hashed tokens (verify 24 h, reset 1 h), reset/change revokes sessions, Origin must belong to the SAME brand as the host plus a per-session CSRF token header, throttling per route, all events audited with the brand.
+- **Guest actor**: guests, staff cookies and customer cookies on `/admin` all answer 401; `/customer/me` without a customer session answers 401.
+- **Admin read-only view**: `GET /admin/customers`, `GET /admin/customers/:id` (`customers.view`; platform-wide or brand-wide grants only, since customers belong to a brand; no credentials returned).
+- Verification: `pnpm check` exit 0; `pnpm test:int` 172 passing (21 new customer tests including isolation, row-level security and the admin view).
+- Notes: (1) Deletion request blocks sign-in and ends sessions; the actual retention-aware anonymization is a later, owner-reviewed step. (2) Verification and reset links use the request host (`https` outside development) and the paths `/account/verify-email`, `/account/reset-password`, `/account/forgot-password`, which the storefront must provide in Phase 8; mail goes to the console adapter until a provider exists. (3) Email verification is not required to sign in yet; later phases can require it for sensitive actions. (4) Phone verification, saved addresses and social login are out of scope.
+
 ## Current phase
 
-**Phase 1 — Project Foundation: implemented and verified locally. Awaiting owner approval before Phase 2.** No business modules, authentication, products, orders, checkout or payments exist. No storefront/admin design has been done.
+**Phase 2 — Multi-Store and Access Foundation: complete, approved by the owner on 2026-11-25 (steps 2.1-2.11). Phase 3 has not started and needs explicit approval.** Phase 1 is complete and approved. No business modules, customer authentication, products, orders, checkout or payments exist. Admin design is approved; the admin shell, sign-in and the Phase 2 management screens exist; no storefront design has been done.
 
 ## Completed
 
@@ -18,7 +100,7 @@ Last updated: 2026-11-25
 - [x] pnpm workspace monorepo (`apps/*`, `packages/*`), Git repository initialized (no commits made), `.gitignore`, `.gitattributes`, `.editorconfig`, `.npmrc`.
 - [x] Strict TypeScript via shared presets (`@matilda/config`).
 - [x] `apps/api`: NestJS 11, URI-versioned `/api/v1`, Helmet, CORS allow-list, Zod-validated environment, Pino structured logging with request ids and redaction, global exception filter producing the standard error body, Zod validation pipe, Swagger UI at `/api/docs`, health endpoints, lazy `PrismaService`.
-- [x] Prisma 7 configured (`prisma.config.ts`, empty `schema.prisma` with generator + datasource only, `@prisma/adapter-pg`). **No models, no migrations.**
+- [x] Prisma 7 configured (`prisma.config.ts`, empty `schema.prisma` with generator + datasource only, `@prisma/adapter-pg`). No models in Phase 1; Phase 2 step 2.2 added the tenancy models and the first migration.
 - [x] `apps/storefront` (port 3000) and `apps/admin` (port 3001): Next.js 16 App Router, Tailwind CSS 4, a single unstyled status page that calls the API through `@matilda/api-client`. No design.
 - [x] Shared packages: `config`, `types`, `validation`, `api-client` (working); `ui`, `commerce` (empty by design).
 - [x] ESLint 9 (flat config) + Prettier, root scripts (`pnpm check`).
@@ -62,9 +144,10 @@ Last updated: 2026-11-25
 | Phase | Status |
 |---|---|
 | 0 Planning and Documentation | Complete |
-| 1 Project Foundation | **Complete and fully verified — awaiting approval** |
-| 2–12 | Pending (not authorized) |
+| 1 Project Foundation | Complete, approved |
+| 2 Multi-Store and Access Foundation | **In progress** (complete, approved by the owner) |
+| 3–12 | Pending (not authorized) |
 
 ## Next step
 
-Owner reviews Phase 1 and explicitly approves Phase 2 (Multi-Store and Access Foundation). See [DECISIONS](DECISIONS.md) for open questions that block Phase 2 schema design.
+Owner reviews step 2.11 and Phase 2 as a whole, signs off D2-08 (default role permissions) and provides the business information listed in PHASE-2-PLAN section 14. Phase 3 does not start without explicit approval.
