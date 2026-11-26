@@ -34,3 +34,6 @@ export async function resetAuditLog(ownerPool: Pool): Promise<void> {
     client.release();
   }
 }
+
+/** Redis for the job tests (`pnpm docker:redis:up`). Defaults to the local container. */
+export const testRedisUrl = (): string => process.env.TEST_REDIS_URL ?? 'redis://localhost:6379/15';

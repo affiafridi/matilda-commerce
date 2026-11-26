@@ -2,6 +2,14 @@
 
 Records important project changes. Newest first.
 
+## 2026-11-26 — Phase 4, step 4.1 (foundations)
+
+- Owner approved the Phase 4 plan ("Approve, start 4.1").
+- Added permission `branches.calendar`; `delivery.manage` is now sensitive (step-up).
+- Shared inventory and delivery contracts in `@matilda/validation` with tests.
+- Added `bullmq` and the jobs module (Redis optional at start-up); empty inventory and delivery modules; test-only delivery fixtures.
+- Tests: validation 19, API unit 137, integration 408 (jobs spec needs Redis). No schema change.
+
 ## 2026-11-26 — Phase 4 plan drafted
 
 - Owner approved Phase 3 ("Approve Phase 3, start Phase 4"); Phase 3 marked complete.

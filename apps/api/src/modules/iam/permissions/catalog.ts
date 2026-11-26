@@ -32,6 +32,7 @@ export const PERMISSION_DEFS = [
   def('markets', 'manage', 'Create and edit markets, currencies and languages', true),
   def('branches', 'view', 'View branches'),
   def('branches', 'manage', 'Create and edit branches and their market links', true),
+  def('branches', 'calendar', 'Edit opening hours and closures of a branch'),
   def('users', 'view', 'View staff users and their assignments'),
   def('users', 'manage', 'Invite, suspend and assign roles to staff', true),
   def('roles', 'view', 'View roles and permissions'),
@@ -63,7 +64,12 @@ export const PERMISSION_DEFS = [
   def('inventory', 'adjust', 'Adjust stock'),
   def('inventory', 'transfer', 'Transfer stock between branches'),
   def('delivery', 'view', 'View delivery configuration and assignments'),
-  def('delivery', 'manage', 'Manage zones, slots and restrictions'),
+  def(
+    'delivery',
+    'manage',
+    'Manage zones, charges, slots, restrictions and assignment rules',
+    true,
+  ),
   def('delivery', 'assign', 'Assign deliveries to riders'),
   def('delivery', 'update', 'Update status of assigned deliveries'),
   // Finance

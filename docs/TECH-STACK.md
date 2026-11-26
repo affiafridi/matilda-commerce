@@ -55,7 +55,7 @@ Phase numbers are **[Proposed]**; see [ROADMAP.md](ROADMAP.md).
 | Tooling | TypeScript 5.9, ESLint 9 (flat config) + `typescript-eslint` + `eslint-config-next`, Prettier 3 |
 | Testing | Jest 30 + ts-jest + supertest (API); `node:test` (packages, frontends) |
 
-**Not yet installed (introduced when needed):** Redis client, BullMQ, TanStack Query/Table, React Hook Form, Zustand, next-intl, shadcn/ui, Motion, TipTap, Recharts, Socket.IO, Sentry, Playwright, Argon2 library. See [DECISIONS](DECISIONS.md) D-014 to D-020 for version rationale.
+**Installed in Phase 4 step 4.1:** BullMQ (Redis connection through its own client). **Not yet installed (introduced when needed):** TanStack Query/Table, React Hook Form, Zustand, next-intl, shadcn/ui, Motion, TipTap, Recharts, Socket.IO, Sentry, Playwright, Argon2 library. See [DECISIONS](DECISIONS.md) D-014 to D-020 for version rationale.
 
 ## Rules
 

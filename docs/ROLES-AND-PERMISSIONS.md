@@ -47,7 +47,7 @@ settings.manage_payments
 users.manage roles.manage
 ```
 
-[Proposed] Additional families to define in Phase 2: inventory.*, delivery.*, production.*, customers.*, reviews.*, promotions.*, cms.*, media.*, notifications.*, reports.*, audit.view, integrations.manage, branches.manage, markets.manage, brands.manage.
+[Phase 4] `branches.calendar` (opening hours and closures) was added in step 4.1, and `delivery.manage` is sensitive (step-up). [Proposed] Additional families to define in Phase 2: inventory.*, delivery.*, production.*, customers.*, reviews.*, promotions.*, cms.*, media.*, notifications.*, reports.*, audit.view, integrations.manage, branches.manage, markets.manage, brands.manage.
 
 ## Proposed default emphasis per role [Proposed — validate with owner]
 

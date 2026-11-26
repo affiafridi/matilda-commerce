@@ -15,6 +15,9 @@ import { AdminModule } from './modules/admin/admin.module';
 import { StaffAuthModule } from './modules/staff-auth/staff-auth.module';
 import { TenancyModule } from './modules/tenancy/tenancy.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { DeliveryModule } from './modules/delivery/delivery.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 
 @Module({
   imports: [
@@ -32,6 +35,9 @@ import { CatalogModule } from './modules/catalog/catalog.module';
     CustomerAuthModule,
     IamModule,
     CatalogModule,
+    JobsModule,
+    InventoryModule,
+    DeliveryModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

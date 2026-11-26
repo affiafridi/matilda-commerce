@@ -2,9 +2,17 @@
 
 Last updated: 2026-11-25
 
-## Phase 4 status (2026-11-26): PLAN DRAFTED, awaiting owner approval
+## Phase 4 status (2026-11-26): IN PROGRESS (step 4.1 done, awaiting owner review)
 
-[PHASE-4-PLAN.md](PHASE-4-PLAN.md) covers inventory, reservations, delivery areas, zones, slots, restrictions and branch assignment in steps 4.1 to 4.13 with decisions D4-01 to D4-16. No code has been written. Next: your review of the plan and the questions in its section 10.
+Plan approved by the owner ("Approve, start 4.1") with decisions D4-01 to D4-16 as recommended: [PHASE-4-PLAN.md](PHASE-4-PLAN.md). Steps 4.1 to 4.13; the schema review gate is 4.2.
+
+| Step | Status |
+|---|---|
+| 4.1 Foundations | **Done, awaiting owner review**: permission `branches.calendar` added (Operations Manager and Branch Manager defaults); `delivery.manage` is now a sensitive permission (step-up), the other inventory and delivery keys already existed. Shared contracts in `@matilda/validation` (`inventory.ts`: movement types and direction, out-of-stock behaviours, reservation and transfer states with allowed transitions, quantities, public stock state; `delivery.ts`: area levels, method kinds, restriction targets and conditions, assignment rule kinds, `HH:mm` times, opening hours with overlap checks, dates), 7 new tests. Empty `InventoryModule` and `DeliveryModule` shells. `JobsModule` with `JobsService`: BullMQ over Redis (new dependency `bullmq`, already in the approved stack, D4-15), connects only when a queue or worker is requested, so the API still starts without Redis. Test-only delivery fixtures (a flower kitchen open long hours every day; a cake kitchen closed Sundays with a lunch break, long lead time and few slots; three zones). Tests need Redis for the job spec: `pnpm docker:redis:up`. No schema change. |
+| 4.2 Schema draft | Pending (**owner reviews DDL**) |
+| 4.3 - 4.13 | Pending |
+
+Notes: the fixtures are not your real branches or rules (still outstanding); the reservation expiry job itself arrives in 4.8.
 
 ## Phase 3 status (2026-11-26): COMPLETE, approved by the owner ("Approve Phase 3, start Phase 4")
 

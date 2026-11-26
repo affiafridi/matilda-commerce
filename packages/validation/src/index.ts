@@ -10,5 +10,7 @@ export const paginationQuerySchema = z.object({
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 
 export * from './catalog.ts';
+export * from './delivery.ts';
+export * from './inventory.ts';
 export { z };
 export type { ZodType } from 'zod';

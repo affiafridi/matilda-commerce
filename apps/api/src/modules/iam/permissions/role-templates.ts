@@ -30,6 +30,7 @@ export const ROLE_TEMPLATES: readonly RoleTemplate[] = [
       'markets.view',
       'branches.view',
       'branches.manage',
+      'branches.calendar',
       'users.view',
       'roles.view',
       'settings.view',
@@ -57,6 +58,7 @@ export const ROLE_TEMPLATES: readonly RoleTemplate[] = [
     description: 'Daily operations of the assigned branches.',
     permissions: [
       'branches.view',
+      'branches.calendar',
       'users.view',
       'customers.view',
       'products.view',
