@@ -38,6 +38,7 @@ These are **templates, not limits**: they seed default permission sets that can 
 
 ```text
 products.view  products.create  products.edit  products.delete  products.publish
+pricing.edit   taxonomy.manage (categories, collections, tags, attributes; added in Phase 3)
 orders.view    orders.create    orders.edit    orders.cancel
 refunds.create refunds.approve
 seo.view seo.edit seo.publish

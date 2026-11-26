@@ -55,6 +55,11 @@ export const envSchema = z
     PASSWORD_PEPPER: z.string().min(32).optional(),
     // Public base URL of the admin app, used in invite and reset links.
     ADMIN_BASE_URL: z.url().default('http://localhost:3001'),
+    // Media storage adapter (D3-09). Local disk for development; the Cloudflare R2 adapter is added
+    // with the deployment setup. The folder is private: files are served only through the API.
+    MEDIA_STORAGE: z.enum(['local']).default('local'),
+    MEDIA_LOCAL_DIR: z.string().min(1).default('.media'),
+    MEDIA_MAX_UPLOAD_BYTES: z.coerce.number().int().min(1024).max(52_428_800).default(10_485_760),
   })
   .superRefine((env, ctx) => {
     const strict = env.NODE_ENV === 'staging' || env.NODE_ENV === 'production';

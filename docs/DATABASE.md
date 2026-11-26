@@ -48,3 +48,9 @@ Migrations reviewed and applied via controlled procedure ([DEPLOYMENT](DEPLOYMEN
 ## Open schema questions
 
 Customer identity model (brand-specific rows vs. shared identity with per-brand profile); order-number format per market; tax model (inclusive/exclusive, VAT 5% UAE assumption to verify); how inventory is modeled for made-to-order and bundles; RLS decision. Tracked in [DECISIONS](DECISIONS.md).
+
+## Catalog (Phase 3, implemented in migration `catalog_engine`)
+
+Forty tables for products, translations, categories, collections, tags, attributes, variations, market prices, customization options and rules, add-ons, bundles, media and slug history. Every table has `brand_id`, composite foreign keys to `(id, brand_id)` parents, forced row-level security with one `<table>_scope` policy, and integer minor-unit prices. Full definition, rules and deviations: [PHASE-3-SCHEMA-DRAFT.md](PHASE-3-SCHEMA-DRAFT.md).
+
+- Attribute keys (step 3.3, migration `attribute_key_unique`): unique per brand among live shared attributes and per product among live product-specific ones; a soft-deleted attribute releases its key. The slug history table only accepts product, category and collection (tags have no public URL).

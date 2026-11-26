@@ -2,6 +2,79 @@
 
 Records important project changes. Newest first.
 
+## 2026-11-26 — Phase 3, step 3.9 (media)
+
+- Owner approved step 3.8 ("Approve, start 3.9").
+- Admin API: media library (`/media` upload, list, get, alt text, delete), product gallery (`/products/:id/media`) and variation image; public variant delivery at `/api/v1/media/:brandId/:assetId/:kind`. Audited as `media.upload`, `media.alt.set`, `media.delete`, `product.media.set`, `variation.media.set`.
+- Uploads are validated by content, limited in size and pixels, stripped of metadata and re-encoded; WebP variants are generated with `sharp` (approved in D3-10). Storage sits behind an adapter (local disk now). New settings `MEDIA_STORAGE`, `MEDIA_LOCAL_DIR`, `MEDIA_MAX_UPLOAD_BYTES`; the local folder is git-ignored.
+- New dependencies in the API: `sharp` 0.35.5 and `@types/multer` (dev).
+- No schema change. Tests: `media.int-spec.ts` (15); integration total 387.
+
+## 2026-11-26 — Phase 3, step 3.8 (add-ons and bundles)
+
+- Owner approved step 3.7 ("Approve, start 3.8").
+- Admin API `GET/PUT /products/:id/addons` and `GET/PUT /products/:id/bundle`; audited as `product.addons.set` and `product.bundle.set`.
+- Rules: required groups need a minimum of one; selection limits within the item count; inline add-ons have a key, English label and per-market price; product add-ons use the add-on product's own price (D3-08); a variable add-on or component needs its variation; no self add-ons, no bundle add-ons, no nested bundles; one component entry per product and variation; a bundle needs a component to publish.
+- No schema change. Tests: `addons.int-spec.ts` (11); integration total 372.
+
+## 2026-11-26 — Phase 3, step 3.7 (customization options)
+
+- Owner approved step 3.6 ("Approve, start 3.7").
+- Admin API `GET/PUT /products/:id/options`: option groups, choices, translations, per-market extra charges and conditional visibility rules, matched by key so ids stay stable. Audited as `product.options.set`.
+- Rules: shape per option type, English labels, selection limits within the choice count, no rule loops, prices in whole non-negative minor units for markets and currencies of the brand, price changes need `pricing.edit`.
+- No schema change. Tests: `options.int-spec.ts` (11); integration total 361.
+
+## 2026-11-26 — Phase 3, step 3.6 (market pricing)
+
+- Owner approved step 3.5 ("Approve, start 3.6").
+- Admin API under `/products/:id`: list, replace and delete prices, and a read-only price preview at any moment. Reading needs `products.view`, changing prices `pricing.edit`; audited as `price.set` and `price.delete`.
+- Rules: integer minor units only; sale below regular; sale dates need a sale price; currency must belong to the market; one price per market, currency and item; variable products priced per variation. Publishing needs a price for every sellable item in every market.
+- `@matilda/validation`: `effectivePrice` (shared base price rule). No schema change.
+- Tests: `pricing.int-spec.ts` (11) plus the publish tests updated; integration total 350.
+
+## 2026-11-26 — Phase 3, step 3.5 (variations)
+
+- Owner approved step 3.4 ("Approve, start 3.5").
+- Admin API under `/products/:id`: product attributes with chosen values and variation-driving flags, variation list, generate, manual create, single and bulk edit, soft delete. Permissions `products.view` and `products.edit` over the brand; every change audited.
+- Rules: variable products only; at most 100 variations; one value per driving attribute; fixed combination; SKU unique per brand across products and variations; in-use attributes and values are protected; publishing a variable product needs an active variation.
+- No schema change. Tests: `variations.int-spec.ts` (17); integration total 339.
+
+## 2026-11-26 — Phase 3, step 3.4 (products)
+
+- Owner approved step 3.3 ("Approve, start 3.4").
+- Admin API under `/api/v1/admin/brands/:brandId/catalog/products`: list, create (draft), get, edit, delete (soft), translations, taxonomy links, availability (markets and branches), publish, unpublish, archive. Permissions `products.view`, `.create`, `.edit`, `.delete`, `.publish` over the brand; every change audited.
+- Rules: English required; SKU unique per brand and shared with variations, not allowed on variable products; slug history on change and delete; publishing needs an English name and a market; scheduling needs `products.publish`; visibility derived from status and schedule; bundle components cannot be deleted.
+- No schema change. Tests: `products.int-spec.ts` (16); integration total 322.
+
+## 2026-11-26 — Phase 3, step 3.3 (taxonomy and attributes)
+
+- Owner approved step 3.2 ("Approve, start 3.3").
+- Admin API under `/api/v1/admin/brands/:brandId/catalog/`: `categories`, `collections`, `tags` (list with search and status, create, get, update, translations per language, soft delete) and `attributes` (with values and translations). Permissions `products.view` (read) and `taxonomy.manage` (write), checked over the brand; all changes audited.
+- Rules: English required; slug from the name when omitted, unique per brand and language, redirect history kept for categories and collections; category tree at most 4 levels with no cycles; categories with subcategories or products, and attributes or values used by products, cannot be deleted or re-keyed; colours only on colour attributes.
+- Migration `attribute_key_unique`: partial unique indexes on live attribute keys. Prisma relation names on catalog models made readable (names only, no database change).
+- `@matilda/validation`: `slugify`. Tests: `taxonomy.int-spec.ts` (29); integration total 306.
+
+## 2026-11-26 — Phase 3, step 3.2 (catalog schema migration)
+
+- Owner approved the schema draft (all nine questions as recommended).
+- Migration `catalog_engine`: 40 catalog tables with brand composite foreign keys, forced row-level security, check constraints, partial unique indexes, 9 integrity triggers (SKU sharing, variation limit, bundle and add-on shape, price targets, branch and brand, category tree) and a trigram search index; `pg_trgm` enabled.
+- Tests: `catalog-schema.int-spec.ts` (104 tests); integration total 277.
+
+## 2026-11-25 — Phase 3, step 3.2 (schema draft)
+
+- Added `docs/PHASE-3-SCHEMA-DRAFT.md` for owner review: catalog tables, constraints, row-level security, indexes, tests and nine questions. No migration or code change.
+
+## 2026-11-25 — Phase 3, step 3.1 (foundations)
+
+- Owner approved the Phase 3 plan.
+- Added permission `taxonomy.manage` (Catalog Manager default); permission catalog now has 53 keys.
+- `@matilda/validation`: catalog contracts, money helpers and the variation generator (8 tests); package now builds with `rewriteRelativeImportExtensions`.
+- API: empty `CatalogModule`, test-only product fixtures and their spec.
+
+## 2026-11-25 — Phase 3 started (plan only)
+
+- Added `docs/PHASE-3-PLAN.md` (draft): scope, domain model, permissions, API, admin screens, steps 3.1 to 3.12 with owner gates, decisions D3-01 to D3-15. No code written.
+
 ## 2026-11-25 — Phase 2, step 2.11 (hardening and verification)
 
 - Security: `effect` pinned to 3.22.5 (fixes GHSA-7589-6fvf-x4pw); `pnpm audit --prod` is clean.

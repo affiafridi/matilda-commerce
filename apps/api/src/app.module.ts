@@ -14,6 +14,7 @@ import { CustomerAuthModule } from './modules/customer-auth/customer-auth.module
 import { AdminModule } from './modules/admin/admin.module';
 import { StaffAuthModule } from './modules/staff-auth/staff-auth.module';
 import { TenancyModule } from './modules/tenancy/tenancy.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TenancyModule } from './modules/tenancy/tenancy.module';
     AdminModule,
     CustomerAuthModule,
     IamModule,
+    CatalogModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

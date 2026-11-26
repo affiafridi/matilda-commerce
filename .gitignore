@@ -20,6 +20,9 @@ coverage/
 npm-debug.log*
 pnpm-debug.log*
 
+# local media storage (development uploads)
+apps/api/.media/
+
 # prisma generated client
 apps/api/src/generated/
 

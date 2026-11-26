@@ -1,6 +1,10 @@
 {
   "extends": "@matilda/config/tsconfig.lib.json",
-  "compilerOptions": { "outDir": "dist", "rootDir": "src" },
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "rewriteRelativeImportExtensions": true
+  },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"]
 }

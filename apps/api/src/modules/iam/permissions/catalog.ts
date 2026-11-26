@@ -49,6 +49,7 @@ export const PERMISSION_DEFS = [
   def('products', 'delete', 'Delete products'),
   def('products', 'publish', 'Publish and unpublish products'),
   def('pricing', 'edit', 'Edit prices'),
+  def('taxonomy', 'manage', 'Manage categories, collections, tags and attributes'),
   // Orders and fulfilment
   def('orders', 'view', 'View orders'),
   def('orders', 'create', 'Create orders on behalf of customers'),

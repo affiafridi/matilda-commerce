@@ -102,6 +102,7 @@ export const ROLE_TEMPLATES: readonly RoleTemplate[] = [
       'products.delete',
       'products.publish',
       'pricing.edit',
+      'taxonomy.manage',
       'media.manage',
       'inventory.view',
     ],

@@ -39,6 +39,8 @@ Status: **Phase 0 (Planning and Documentation).** No application code exists. En
 | [PERFORMANCE.md](PERFORMANCE.md) | Caching, optimization, Web Vitals |
 | [TESTING.md](TESTING.md) | QA strategy |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Infrastructure, CI/CD, backups |
+| [PHASE-3-PLAN.md](PHASE-3-PLAN.md) | Phase 3 plan (approved) |
+| [PHASE-3-SCHEMA-DRAFT.md](PHASE-3-SCHEMA-DRAFT.md) | Catalog schema (approved, migrated) |
 | [FEATURE-PARITY.md](FEATURE-PARITY.md) | Matilda Cake / WooCommerce parity checklist |
 | [ROADMAP.md](ROADMAP.md) | Phases 0–12 |
 | [PHASE-2-PLAN.md](PHASE-2-PLAN.md) | Phase 2 implementation plan (approved; in progress) |

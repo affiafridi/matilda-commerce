@@ -64,38 +64,49 @@ model Country {
 }
 
 model Brand {
-  id              String                @id @default(uuid(7)) @db.Uuid
-  slug            String                @unique
-  name            String
-  legalEntityName String?               @map("legal_entity_name")
-  status          ActiveStatus          @default(ACTIVE)
-  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
-  domains         BrandDomain[]
-  markets         Market[]
-  assignments     StaffRoleAssignment[]
-  customers       Customer[]
+  id                          String                @id @default(uuid(7)) @db.Uuid
+  slug                        String                @unique
+  name                        String
+  legalEntityName             String?               @map("legal_entity_name")
+  status                      ActiveStatus          @default(ACTIVE)
+  createdAt                   DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                   DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
+  domains                     BrandDomain[]
+  markets                     Market[]
+  assignments                 StaffRoleAssignment[]
+  customers                   Customer[]
+  ProductBrandRel0            Product[]             @relation("product_0")
+  CategoryBrandRel0           Category[]            @relation("category_0")
+  CollectionBrandRel0         Collection[]          @relation("collection_0")
+  TagBrandRel0                Tag[]                 @relation("tag_0")
+  AttributeBrandRel0          Attribute[]           @relation("attribute_0")
+  MediaAssetBrandRel0         MediaAsset[]          @relation("media_asset_0")
+  CatalogSlugHistoryBrandRel0 CatalogSlugHistory[]  @relation("catalog_slug_history_0")
 
   @@map("brand")
 }
 
 /// A brand's presence in a country. Owns currencies, languages and timezone.
 model Market {
-  id          String                @id @default(uuid(7)) @db.Uuid
-  brandId     String                @map("brand_id") @db.Uuid
-  countryId   String                @map("country_id") @db.Uuid
-  code        String
-  status      MarketStatus          @default(DRAFT)
-  timezone    String
-  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
-  brand       Brand                 @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  country     Country               @relation(fields: [countryId], references: [id], onDelete: Restrict)
-  currencies  MarketCurrency[]
-  languages   MarketLanguage[]
-  domains     BrandDomain[]
-  branches    BranchMarket[]
-  assignments StaffRoleAssignment[]
+  id                       String                @id @default(uuid(7)) @db.Uuid
+  brandId                  String                @map("brand_id") @db.Uuid
+  countryId                String                @map("country_id") @db.Uuid
+  code                     String
+  status                   MarketStatus          @default(DRAFT)
+  timezone                 String
+  createdAt                DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
+  brand                    Brand                 @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  country                  Country               @relation(fields: [countryId], references: [id], onDelete: Restrict)
+  currencies               MarketCurrency[]
+  languages                MarketLanguage[]
+  domains                  BrandDomain[]
+  branches                 BranchMarket[]
+  assignments              StaffRoleAssignment[]
+  ProductMarketMarketRel1  ProductMarket[]       @relation("product_market_1")
+  MarketPriceMarketRel0    MarketPrice[]         @relation("market_price_0")
+  OptionPriceMarketRel0    OptionPrice[]         @relation("option_price_0")
+  AddonItemPriceMarketRel1 AddonItemPrice[]      @relation("addon_item_price_1")
 
   @@unique([brandId, countryId])
   @@unique([brandId, code])
@@ -105,11 +116,14 @@ model Market {
 }
 
 model MarketCurrency {
-  marketId     String   @map("market_id") @db.Uuid
-  currencyCode String   @map("currency_code") @db.Char(3)
-  isDefault    Boolean  @default(false) @map("is_default")
-  market       Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  currency     Currency @relation(fields: [currencyCode], references: [code], onDelete: Restrict)
+  marketId                 String           @map("market_id") @db.Uuid
+  currencyCode             String           @map("currency_code") @db.Char(3)
+  isDefault                Boolean          @default(false) @map("is_default")
+  market                   Market           @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  currency                 Currency         @relation(fields: [currencyCode], references: [code], onDelete: Restrict)
+  MarketPriceMarketRel1    MarketPrice[]    @relation("market_price_1")
+  OptionPriceMarketRel1    OptionPrice[]    @relation("option_price_1")
+  AddonItemPriceMarketRel2 AddonItemPrice[] @relation("addon_item_price_2")
 
   @@id([marketId, currencyCode])
   @@map("market_currency")
@@ -145,25 +159,26 @@ model BrandDomain {
 
 /// Physical branch. A branch may serve several brands/markets of its own country (see BranchMarket).
 model Branch {
-  id           String                @id @default(uuid(7)) @db.Uuid
-  code         String                @unique
-  name         String
-  countryId    String                @map("country_id") @db.Uuid
-  addressLine1 String?               @map("address_line1")
-  addressLine2 String?               @map("address_line2")
-  city         String?
-  area         String?
-  latitude     Decimal?              @db.Decimal(9, 6)
-  longitude    Decimal?              @db.Decimal(9, 6)
-  phone        String?
-  email        String?
-  timezone     String
-  status       ActiveStatus          @default(ACTIVE)
-  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt    DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
-  country      Country               @relation(fields: [countryId], references: [id], onDelete: Restrict)
-  markets      BranchMarket[]
-  assignments  StaffRoleAssignment[]
+  id                      String                @id @default(uuid(7)) @db.Uuid
+  code                    String                @unique
+  name                    String
+  countryId               String                @map("country_id") @db.Uuid
+  addressLine1            String?               @map("address_line1")
+  addressLine2            String?               @map("address_line2")
+  city                    String?
+  area                    String?
+  latitude                Decimal?              @db.Decimal(9, 6)
+  longitude               Decimal?              @db.Decimal(9, 6)
+  phone                   String?
+  email                   String?
+  timezone                String
+  status                  ActiveStatus          @default(ACTIVE)
+  createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
+  country                 Country               @relation(fields: [countryId], references: [id], onDelete: Restrict)
+  markets                 BranchMarket[]
+  assignments             StaffRoleAssignment[]
+  ProductBranchBranchRel1 ProductBranch[]       @relation("product_branch_1")
 
   @@unique([id, countryId])
   @@index([countryId, status])
@@ -492,4 +507,801 @@ model CustomerToken {
   @@index([customerId, type])
   @@index([expiresAt], map: "customer_token_expiry_idx")
   @@map("customer_token")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Phase 3 step 3.2: product and catalog engine (docs/PHASE-3-SCHEMA-DRAFT.md, approved).
+// Check constraints, partial unique indexes, triggers and row-level security are hand-written in
+// the migration SQL (`catalog_engine`). Every table carries brand_id and uses composite foreign keys.
+// ---------------------------------------------------------------------------------------------
+
+enum ProductType {
+  SIMPLE
+  VARIABLE
+  BUNDLE
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AttributeKind {
+  TEXT
+  COLOR
+  NUMBER
+}
+
+enum OptionType {
+  SELECT
+  RADIO
+  CHECKBOX
+  TEXT
+  TEXTAREA
+  FILE
+  DATE
+}
+
+enum RuleOperator {
+  FILLED
+  EQUALS
+  NOT_EQUALS
+}
+
+enum AddonKind {
+  PRODUCT
+  INLINE
+}
+
+enum ProductRelationKind {
+  RELATED
+  UPSELL
+  CROSS_SELL
+}
+
+enum MediaStatus {
+  UPLOADED
+  READY
+  REJECTED
+}
+
+model Product {
+  id                                String               @id @default(uuid(7)) @db.Uuid
+  brandId                           String               @map("brand_id") @db.Uuid
+  type                              ProductType
+  status                            ProductStatus        @default(DRAFT)
+  sku                               String?
+  publishAt                         DateTime?            @map("publish_at") @db.Timestamptz()
+  unpublishAt                       DateTime?            @map("unpublish_at") @db.Timestamptz()
+  madeToOrder                       Boolean              @default(false) @map("made_to_order")
+  prepTimeMinutes                   Int?                 @map("prep_time_minutes")
+  leadTimeMinutes                   Int?                 @map("lead_time_minutes")
+  minQuantity                       Int                  @default(1) @map("min_quantity")
+  maxQuantity                       Int?                 @map("max_quantity")
+  primaryCategoryId                 String?              @map("primary_category_id") @db.Uuid
+  sortOrder                         Int                  @default(0) @map("sort_order")
+  createdAt                         DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                         DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt                         DateTime?            @map("deleted_at") @db.Timestamptz()
+  brand                             Brand                @relation("product_0", fields: [brandId], references: [id], onDelete: Restrict)
+  primaryCategory                   Category?            @relation("product_1", fields: [primaryCategoryId, brandId], references: [id, brandId], onDelete: Restrict)
+  translations                      ProductTranslation[] @relation("product_translation_0")
+  categoryLinks                     ProductCategory[]    @relation("product_category_0")
+  collectionLinks                   ProductCollection[]  @relation("product_collection_0")
+  tagLinks                          ProductTag[]         @relation("product_tag_0")
+  ProductRelationProductRel0        ProductRelation[]    @relation("product_relation_0")
+  ProductRelationRelatedProductRel1 ProductRelation[]    @relation("product_relation_1")
+  ProductMarketProductRel0          ProductMarket[]      @relation("product_market_0")
+  ProductBranchProductRel0          ProductBranch[]      @relation("product_branch_0")
+  ProductMediaProductRel0           ProductMedia[]       @relation("product_media_0")
+  AttributeProductRel1              Attribute[]          @relation("attribute_1")
+  ProductAttributeProductRel0       ProductAttribute[]   @relation("product_attribute_0")
+  variations                        Variation[]          @relation("variation_0")
+  MarketPriceProductRel2            MarketPrice[]        @relation("market_price_2")
+  OptionGroupProductRel0            OptionGroup[]        @relation("option_group_0")
+  OptionRuleProductRel0             OptionRule[]         @relation("option_rule_0")
+  AddonGroupProductRel0             AddonGroup[]         @relation("addon_group_0")
+  AddonItemAddonProductRel1         AddonItem[]          @relation("addon_item_1")
+  BundleItemBundleProductRel0       BundleItem[]         @relation("bundle_item_0")
+  BundleItemComponentProductRel1    BundleItem[]         @relation("bundle_item_1")
+
+  @@unique([id, brandId])
+  @@unique([brandId, sku])
+  @@index([brandId, status, sortOrder])
+  @@index([primaryCategoryId, brandId])
+  @@map("product")
+}
+
+model ProductTranslation {
+  brandId          String  @map("brand_id") @db.Uuid
+  productId        String  @map("product_id") @db.Uuid
+  language         String
+  name             String
+  shortDescription String? @map("short_description")
+  description      String?
+  slug             String
+  seoTitle         String? @map("seo_title")
+  seoDescription   String? @map("seo_description")
+  product          Product @relation("product_translation_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([productId, language])
+  @@unique([brandId, language, slug])
+  @@index([productId, brandId])
+  @@map("product_translation")
+}
+
+model ProductCategory {
+  brandId    String   @map("brand_id") @db.Uuid
+  productId  String   @map("product_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  sortOrder  Int      @default(0) @map("sort_order")
+  product    Product  @relation("product_category_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  category   Category @relation("product_category_1", fields: [categoryId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId, productId])
+  @@index([productId, brandId])
+  @@index([categoryId, brandId])
+  @@map("product_category")
+}
+
+model ProductCollection {
+  brandId      String     @map("brand_id") @db.Uuid
+  productId    String     @map("product_id") @db.Uuid
+  collectionId String     @map("collection_id") @db.Uuid
+  sortOrder    Int        @default(0) @map("sort_order")
+  product      Product    @relation("product_collection_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  collection   Collection @relation("product_collection_1", fields: [collectionId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([productId, collectionId])
+  @@index([collectionId, productId])
+  @@index([productId, brandId])
+  @@index([collectionId, brandId])
+  @@map("product_collection")
+}
+
+model ProductTag {
+  brandId   String  @map("brand_id") @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  tagId     String  @map("tag_id") @db.Uuid
+  sortOrder Int     @default(0) @map("sort_order")
+  product   Product @relation("product_tag_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  tag       Tag     @relation("product_tag_1", fields: [tagId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([productId, tagId])
+  @@index([tagId, productId])
+  @@index([productId, brandId])
+  @@index([tagId, brandId])
+  @@map("product_tag")
+}
+
+model ProductRelation {
+  brandId          String              @map("brand_id") @db.Uuid
+  productId        String              @map("product_id") @db.Uuid
+  relatedProductId String              @map("related_product_id") @db.Uuid
+  kind             ProductRelationKind
+  sortOrder        Int                 @default(0) @map("sort_order")
+  product          Product             @relation("product_relation_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  relatedProduct   Product             @relation("product_relation_1", fields: [relatedProductId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([productId, relatedProductId, kind])
+  @@index([productId, brandId])
+  @@index([relatedProductId, brandId])
+  @@map("product_relation")
+}
+
+model ProductMarket {
+  brandId   String  @map("brand_id") @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  marketId  String  @map("market_id") @db.Uuid
+  product   Product @relation("product_market_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  market    Market  @relation("product_market_1", fields: [marketId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([productId, marketId])
+  @@index([marketId, productId])
+  @@index([productId, brandId])
+  @@index([marketId, brandId])
+  @@map("product_market")
+}
+
+model ProductBranch {
+  brandId   String  @map("brand_id") @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  branchId  String  @map("branch_id") @db.Uuid
+  product   Product @relation("product_branch_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  branch    Branch  @relation("product_branch_1", fields: [branchId], references: [id], onDelete: Restrict)
+
+  @@id([productId, branchId])
+  @@index([branchId, productId])
+  @@index([productId, brandId])
+  @@map("product_branch")
+}
+
+model ProductMedia {
+  brandId      String     @map("brand_id") @db.Uuid
+  productId    String     @map("product_id") @db.Uuid
+  mediaAssetId String     @map("media_asset_id") @db.Uuid
+  sortOrder    Int        @default(0) @map("sort_order")
+  isPrimary    Boolean    @default(false) @map("is_primary")
+  product      Product    @relation("product_media_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  mediaAsset   MediaAsset @relation("product_media_1", fields: [mediaAssetId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@id([productId, mediaAssetId])
+  @@index([mediaAssetId])
+  @@index([productId, brandId])
+  @@index([mediaAssetId, brandId])
+  @@map("product_media")
+}
+
+model Category {
+  id                         String                @id @default(uuid(7)) @db.Uuid
+  brandId                    String                @map("brand_id") @db.Uuid
+  parentId                   String?               @map("parent_id") @db.Uuid
+  status                     ProductStatus         @default(DRAFT)
+  sortOrder                  Int                   @default(0) @map("sort_order")
+  mediaAssetId               String?               @map("media_asset_id") @db.Uuid
+  createdAt                  DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                  DateTime              @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt                  DateTime?             @map("deleted_at") @db.Timestamptz()
+  ProductPrimaryCategoryRel1 Product[]             @relation("product_1")
+  productLinks               ProductCategory[]     @relation("product_category_1")
+  brand                      Brand                 @relation("category_0", fields: [brandId], references: [id], onDelete: Restrict)
+  parent                     Category?             @relation("category_1", fields: [parentId, brandId], references: [id, brandId], onDelete: Restrict)
+  children                   Category[]            @relation("category_1")
+  mediaAsset                 MediaAsset?           @relation("category_2", fields: [mediaAssetId, brandId], references: [id, brandId], onDelete: Restrict)
+  translations               CategoryTranslation[] @relation("category_translation_0")
+
+  @@unique([id, brandId])
+  @@index([brandId, parentId, sortOrder])
+  @@index([parentId, brandId])
+  @@index([mediaAssetId, brandId])
+  @@map("category")
+}
+
+model CategoryTranslation {
+  brandId        String   @map("brand_id") @db.Uuid
+  categoryId     String   @map("category_id") @db.Uuid
+  language       String
+  name           String
+  description    String?
+  slug           String
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  category       Category @relation("category_translation_0", fields: [categoryId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([categoryId, language])
+  @@unique([brandId, language, slug])
+  @@index([categoryId, brandId])
+  @@map("category_translation")
+}
+
+model Collection {
+  id           String                  @id @default(uuid(7)) @db.Uuid
+  brandId      String                  @map("brand_id") @db.Uuid
+  status       ProductStatus           @default(DRAFT)
+  sortOrder    Int                     @default(0) @map("sort_order")
+  createdAt    DateTime                @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime                @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt    DateTime?               @map("deleted_at") @db.Timestamptz()
+  productLinks ProductCollection[]     @relation("product_collection_1")
+  brand        Brand                   @relation("collection_0", fields: [brandId], references: [id], onDelete: Restrict)
+  translations CollectionTranslation[] @relation("collection_translation_0")
+
+  @@unique([id, brandId])
+  @@index([brandId, status, sortOrder])
+  @@map("collection")
+}
+
+model CollectionTranslation {
+  brandId        String     @map("brand_id") @db.Uuid
+  collectionId   String     @map("collection_id") @db.Uuid
+  language       String
+  name           String
+  description    String?
+  slug           String
+  seoTitle       String?    @map("seo_title")
+  seoDescription String?    @map("seo_description")
+  collection     Collection @relation("collection_translation_0", fields: [collectionId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([collectionId, language])
+  @@unique([brandId, language, slug])
+  @@index([collectionId, brandId])
+  @@map("collection_translation")
+}
+
+model Tag {
+  id           String           @id @default(uuid(7)) @db.Uuid
+  brandId      String           @map("brand_id") @db.Uuid
+  status       ProductStatus    @default(DRAFT)
+  sortOrder    Int              @default(0) @map("sort_order")
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt    DateTime?        @map("deleted_at") @db.Timestamptz()
+  productLinks ProductTag[]     @relation("product_tag_1")
+  brand        Brand            @relation("tag_0", fields: [brandId], references: [id], onDelete: Restrict)
+  translations TagTranslation[] @relation("tag_translation_0")
+
+  @@unique([id, brandId])
+  @@index([brandId, status, sortOrder])
+  @@map("tag")
+}
+
+model TagTranslation {
+  brandId        String  @map("brand_id") @db.Uuid
+  tagId          String  @map("tag_id") @db.Uuid
+  language       String
+  name           String
+  description    String?
+  slug           String
+  seoTitle       String? @map("seo_title")
+  seoDescription String? @map("seo_description")
+  tag            Tag     @relation("tag_translation_0", fields: [tagId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([tagId, language])
+  @@unique([brandId, language, slug])
+  @@index([tagId, brandId])
+  @@map("tag_translation")
+}
+
+model Attribute {
+  id                            String                 @id @default(uuid(7)) @db.Uuid
+  brandId                       String                 @map("brand_id") @db.Uuid
+  key                           String
+  kind                          AttributeKind          @default(TEXT)
+  productId                     String?                @map("product_id") @db.Uuid
+  createdAt                     DateTime               @default(now()) @map("created_at") @db.Timestamptz()
+  deletedAt                     DateTime?              @map("deleted_at") @db.Timestamptz()
+  brand                         Brand                  @relation("attribute_0", fields: [brandId], references: [id], onDelete: Restrict)
+  product                       Product?               @relation("attribute_1", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  values                        AttributeValue[]       @relation("attribute_value_0")
+  translations                  AttributeTranslation[] @relation("attribute_translation_0")
+  ProductAttributeAttributeRel1 ProductAttribute[]     @relation("product_attribute_1")
+
+  @@unique([id, brandId])
+  @@index([brandId, key])
+  @@index([productId, brandId])
+  @@map("attribute")
+}
+
+model AttributeValue {
+  id                                      String                      @id @default(uuid(7)) @db.Uuid
+  brandId                                 String                      @map("brand_id") @db.Uuid
+  attributeId                             String                      @map("attribute_id") @db.Uuid
+  key                                     String
+  colorHex                                String?                     @map("color_hex")
+  sortOrder                               Int                         @default(0) @map("sort_order")
+  attribute                               Attribute                   @relation("attribute_value_0", fields: [attributeId, brandId], references: [id, brandId], onDelete: Cascade)
+  translations                            AttributeValueTranslation[] @relation("attribute_value_translation_0")
+  ProductAttributeValueAttributeValueRel1 ProductAttributeValue[]     @relation("product_attribute_value_1")
+
+  @@unique([id, brandId])
+  @@unique([attributeId, key])
+  @@unique([id, attributeId])
+  @@index([attributeId, brandId])
+  @@map("attribute_value")
+}
+
+model AttributeTranslation {
+  brandId     String    @map("brand_id") @db.Uuid
+  attributeId String    @map("attribute_id") @db.Uuid
+  language    String
+  label       String
+  attribute   Attribute @relation("attribute_translation_0", fields: [attributeId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([attributeId, language])
+  @@index([attributeId, brandId])
+  @@map("attribute_translation")
+}
+
+model AttributeValueTranslation {
+  brandId          String         @map("brand_id") @db.Uuid
+  attributeValueId String         @map("attribute_value_id") @db.Uuid
+  language         String
+  label            String
+  attributeValue   AttributeValue @relation("attribute_value_translation_0", fields: [attributeValueId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([attributeValueId, language])
+  @@index([attributeValueId, brandId])
+  @@map("attribute_value_translation")
+}
+
+model ProductAttribute {
+  brandId                          String                  @map("brand_id") @db.Uuid
+  productId                        String                  @map("product_id") @db.Uuid
+  attributeId                      String                  @map("attribute_id") @db.Uuid
+  drivesVariations                 Boolean                 @default(false) @map("drives_variations")
+  visible                          Boolean                 @default(true)
+  sortOrder                        Int                     @default(0) @map("sort_order")
+  product                          Product                 @relation("product_attribute_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  attribute                        Attribute               @relation("product_attribute_1", fields: [attributeId, brandId], references: [id, brandId], onDelete: Restrict)
+  ProductAttributeValueProductRel0 ProductAttributeValue[] @relation("product_attribute_value_0")
+
+  @@id([productId, attributeId])
+  @@unique([productId, attributeId, brandId])
+  @@index([attributeId])
+  @@index([productId, brandId])
+  @@index([attributeId, brandId])
+  @@map("product_attribute")
+}
+
+model ProductAttributeValue {
+  brandId                   String           @map("brand_id") @db.Uuid
+  productId                 String           @map("product_id") @db.Uuid
+  attributeId               String           @map("attribute_id") @db.Uuid
+  attributeValueId          String           @map("attribute_value_id") @db.Uuid
+  product                   ProductAttribute @relation("product_attribute_value_0", fields: [productId, attributeId, brandId], references: [productId, attributeId, brandId], onDelete: Cascade)
+  attributeValue            AttributeValue   @relation("product_attribute_value_1", fields: [attributeValueId, attributeId], references: [id, attributeId], onDelete: Restrict)
+  VariationValueProductRel2 VariationValue[] @relation("variation_value_2")
+
+  @@id([productId, attributeId, attributeValueId])
+  @@index([attributeValueId, attributeId])
+  @@index([productId, attributeId, brandId])
+  @@map("product_attribute_value")
+}
+
+model Variation {
+  id                               String           @id @default(uuid(7)) @db.Uuid
+  brandId                          String           @map("brand_id") @db.Uuid
+  productId                        String           @map("product_id") @db.Uuid
+  sku                              String
+  combinationKey                   String           @map("combination_key")
+  active                           Boolean          @default(true)
+  sortOrder                        Int              @default(0) @map("sort_order")
+  mediaAssetId                     String?          @map("media_asset_id") @db.Uuid
+  createdAt                        DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                        DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt                        DateTime?        @map("deleted_at") @db.Timestamptz()
+  product                          Product          @relation("variation_0", fields: [productId, brandId], references: [id, brandId], onDelete: Restrict)
+  mediaAsset                       MediaAsset?      @relation("variation_1", fields: [mediaAssetId, brandId], references: [id, brandId], onDelete: Restrict)
+  VariationValueVariationRel0      VariationValue[] @relation("variation_value_0")
+  VariationValueVariationRel1      VariationValue[] @relation("variation_value_1")
+  MarketPriceVariationRel3         MarketPrice[]    @relation("market_price_3")
+  AddonItemAddonVariationRel2      AddonItem[]      @relation("addon_item_2")
+  AddonItemAddonVariationRel3      AddonItem[]      @relation("addon_item_3")
+  BundleItemComponentVariationRel2 BundleItem[]     @relation("bundle_item_2")
+  BundleItemComponentVariationRel3 BundleItem[]     @relation("bundle_item_3")
+
+  @@unique([id, brandId])
+  @@unique([brandId, sku])
+  @@unique([productId, combinationKey])
+  @@unique([id, productId])
+  @@index([productId, brandId])
+  @@index([mediaAssetId, brandId])
+  @@map("variation")
+}
+
+model VariationValue {
+  brandId            String                @map("brand_id") @db.Uuid
+  variationId        String                @map("variation_id") @db.Uuid
+  productId          String                @map("product_id") @db.Uuid
+  attributeId        String                @map("attribute_id") @db.Uuid
+  attributeValueId   String                @map("attribute_value_id") @db.Uuid
+  variation          Variation             @relation("variation_value_0", fields: [variationId, brandId], references: [id, brandId], onDelete: Cascade)
+  variationByProduct Variation             @relation("variation_value_1", fields: [variationId, productId], references: [id, productId], onDelete: Cascade)
+  product            ProductAttributeValue @relation("variation_value_2", fields: [productId, attributeId, attributeValueId], references: [productId, attributeId, attributeValueId], onDelete: Restrict)
+
+  @@id([variationId, attributeId])
+  @@index([productId, attributeId, attributeValueId])
+  @@index([variationId, brandId])
+  @@index([variationId, productId])
+  @@map("variation_value")
+}
+
+model MarketPrice {
+  id                   String         @id @default(uuid(7)) @db.Uuid
+  brandId              String         @map("brand_id") @db.Uuid
+  marketId             String         @map("market_id") @db.Uuid
+  currencyCode         String         @map("currency_code") @db.Char(3)
+  productId            String?        @map("product_id") @db.Uuid
+  variationId          String?        @map("variation_id") @db.Uuid
+  regularMinor         Int            @map("regular_minor")
+  saleMinor            Int?           @map("sale_minor")
+  saleStartsAt         DateTime?      @map("sale_starts_at") @db.Timestamptz()
+  saleEndsAt           DateTime?      @map("sale_ends_at") @db.Timestamptz()
+  updatedAt            DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  market               Market         @relation("market_price_0", fields: [marketId, brandId], references: [id, brandId], onDelete: Restrict)
+  marketByCurrencyCode MarketCurrency @relation("market_price_1", fields: [marketId, currencyCode], references: [marketId, currencyCode], onDelete: Restrict)
+  product              Product?       @relation("market_price_2", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  variation            Variation?     @relation("market_price_3", fields: [variationId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@index([marketId, productId])
+  @@index([marketId, variationId])
+  @@index([marketId, brandId])
+  @@index([marketId, currencyCode])
+  @@index([productId, brandId])
+  @@index([variationId, brandId])
+  @@map("market_price")
+}
+
+model OptionGroup {
+  id                           String                   @id @default(uuid(7)) @db.Uuid
+  brandId                      String                   @map("brand_id") @db.Uuid
+  productId                    String                   @map("product_id") @db.Uuid
+  key                          String
+  type                         OptionType
+  required                     Boolean                  @default(false)
+  minSelect                    Int                      @default(0) @map("min_select")
+  maxSelect                    Int?                     @map("max_select")
+  maxLength                    Int?                     @map("max_length")
+  sortOrder                    Int                      @default(0) @map("sort_order")
+  product                      Product                  @relation("option_group_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  choices                      OptionChoice[]           @relation("option_choice_0")
+  rules                        OptionRule[]             @relation("option_rule_1")
+  OptionRuleDependsOnGroupRel2 OptionRule[]             @relation("option_rule_2")
+  translations                 OptionGroupTranslation[] @relation("option_group_translation_0")
+  OptionPriceOptionGroupRel2   OptionPrice[]            @relation("option_price_2")
+
+  @@unique([id, brandId])
+  @@unique([productId, key])
+  @@unique([id, productId])
+  @@index([productId, brandId])
+  @@map("option_group")
+}
+
+model OptionChoice {
+  id                            String                    @id @default(uuid(7)) @db.Uuid
+  brandId                       String                    @map("brand_id") @db.Uuid
+  optionGroupId                 String                    @map("option_group_id") @db.Uuid
+  key                           String
+  sortOrder                     Int                       @default(0) @map("sort_order")
+  optionGroup                   OptionGroup               @relation("option_choice_0", fields: [optionGroupId, brandId], references: [id, brandId], onDelete: Cascade)
+  OptionRuleDependsOnChoiceRel3 OptionRule[]              @relation("option_rule_3")
+  translations                  OptionChoiceTranslation[] @relation("option_choice_translation_0")
+  OptionPriceOptionChoiceRel3   OptionPrice[]             @relation("option_price_3")
+
+  @@unique([id, brandId])
+  @@unique([optionGroupId, key])
+  @@unique([id, optionGroupId])
+  @@index([optionGroupId, brandId])
+  @@map("option_choice")
+}
+
+model OptionRule {
+  id                String        @id @default(uuid(7)) @db.Uuid
+  brandId           String        @map("brand_id") @db.Uuid
+  productId         String        @map("product_id") @db.Uuid
+  optionGroupId     String        @map("option_group_id") @db.Uuid
+  dependsOnGroupId  String        @map("depends_on_group_id") @db.Uuid
+  operator          RuleOperator
+  dependsOnChoiceId String?       @map("depends_on_choice_id") @db.Uuid
+  product           Product       @relation("option_rule_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  optionGroup       OptionGroup   @relation("option_rule_1", fields: [optionGroupId, productId], references: [id, productId], onDelete: Cascade)
+  dependsOnGroup    OptionGroup   @relation("option_rule_2", fields: [dependsOnGroupId, productId], references: [id, productId], onDelete: Cascade)
+  dependsOnChoice   OptionChoice? @relation("option_rule_3", fields: [dependsOnChoiceId, dependsOnGroupId], references: [id, optionGroupId], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([optionGroupId])
+  @@index([dependsOnGroupId])
+  @@index([dependsOnChoiceId, dependsOnGroupId])
+  @@index([productId, brandId])
+  @@index([optionGroupId, productId])
+  @@index([dependsOnGroupId, productId])
+  @@map("option_rule")
+}
+
+model OptionGroupTranslation {
+  brandId       String      @map("brand_id") @db.Uuid
+  optionGroupId String      @map("option_group_id") @db.Uuid
+  language      String
+  label         String
+  helpText      String?     @map("help_text")
+  optionGroup   OptionGroup @relation("option_group_translation_0", fields: [optionGroupId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([optionGroupId, language])
+  @@index([optionGroupId, brandId])
+  @@map("option_group_translation")
+}
+
+model OptionChoiceTranslation {
+  brandId        String       @map("brand_id") @db.Uuid
+  optionChoiceId String       @map("option_choice_id") @db.Uuid
+  language       String
+  label          String
+  optionChoice   OptionChoice @relation("option_choice_translation_0", fields: [optionChoiceId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([optionChoiceId, language])
+  @@index([optionChoiceId, brandId])
+  @@map("option_choice_translation")
+}
+
+model OptionPrice {
+  id                   String         @id @default(uuid(7)) @db.Uuid
+  brandId              String         @map("brand_id") @db.Uuid
+  marketId             String         @map("market_id") @db.Uuid
+  currencyCode         String         @map("currency_code") @db.Char(3)
+  optionGroupId        String?        @map("option_group_id") @db.Uuid
+  optionChoiceId       String?        @map("option_choice_id") @db.Uuid
+  deltaMinor           Int            @map("delta_minor")
+  market               Market         @relation("option_price_0", fields: [marketId, brandId], references: [id, brandId], onDelete: Restrict)
+  marketByCurrencyCode MarketCurrency @relation("option_price_1", fields: [marketId, currencyCode], references: [marketId, currencyCode], onDelete: Restrict)
+  optionGroup          OptionGroup?   @relation("option_price_2", fields: [optionGroupId, brandId], references: [id, brandId], onDelete: Cascade)
+  optionChoice         OptionChoice?  @relation("option_price_3", fields: [optionChoiceId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@index([marketId, currencyCode])
+  @@index([optionGroupId])
+  @@index([optionChoiceId])
+  @@index([marketId, brandId])
+  @@index([optionGroupId, brandId])
+  @@index([optionChoiceId, brandId])
+  @@map("option_price")
+}
+
+model AddonGroup {
+  id           String                  @id @default(uuid(7)) @db.Uuid
+  brandId      String                  @map("brand_id") @db.Uuid
+  productId    String                  @map("product_id") @db.Uuid
+  key          String
+  required     Boolean                 @default(false)
+  minSelect    Int                     @default(0) @map("min_select")
+  maxSelect    Int?                    @map("max_select")
+  sortOrder    Int                     @default(0) @map("sort_order")
+  product      Product                 @relation("addon_group_0", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  items        AddonItem[]             @relation("addon_item_0")
+  translations AddonGroupTranslation[] @relation("addon_group_translation_0")
+
+  @@unique([id, brandId])
+  @@unique([productId, key])
+  @@index([productId, brandId])
+  @@map("addon_group")
+}
+
+model AddonItem {
+  id                           String                 @id @default(uuid(7)) @db.Uuid
+  brandId                      String                 @map("brand_id") @db.Uuid
+  addonGroupId                 String                 @map("addon_group_id") @db.Uuid
+  kind                         AddonKind
+  addonProductId               String?                @map("addon_product_id") @db.Uuid
+  addonVariationId             String?                @map("addon_variation_id") @db.Uuid
+  key                          String?
+  maxQuantity                  Int                    @default(1) @map("max_quantity")
+  sortOrder                    Int                    @default(0) @map("sort_order")
+  addonGroup                   AddonGroup             @relation("addon_item_0", fields: [addonGroupId, brandId], references: [id, brandId], onDelete: Cascade)
+  addonProduct                 Product?               @relation("addon_item_1", fields: [addonProductId, brandId], references: [id, brandId], onDelete: Restrict)
+  addonVariation               Variation?             @relation("addon_item_2", fields: [addonVariationId, brandId], references: [id, brandId], onDelete: Restrict)
+  addonVariationByAddonProduct Variation?             @relation("addon_item_3", fields: [addonVariationId, addonProductId], references: [id, productId], onDelete: Restrict)
+  translations                 AddonItemTranslation[] @relation("addon_item_translation_0")
+  prices                       AddonItemPrice[]       @relation("addon_item_price_0")
+
+  @@unique([id, brandId])
+  @@index([addonGroupId])
+  @@index([addonProductId])
+  @@index([addonVariationId, addonProductId])
+  @@index([addonGroupId, brandId])
+  @@index([addonProductId, brandId])
+  @@index([addonVariationId, brandId])
+  @@map("addon_item")
+}
+
+model AddonGroupTranslation {
+  brandId      String     @map("brand_id") @db.Uuid
+  addonGroupId String     @map("addon_group_id") @db.Uuid
+  language     String
+  label        String
+  addonGroup   AddonGroup @relation("addon_group_translation_0", fields: [addonGroupId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([addonGroupId, language])
+  @@index([addonGroupId, brandId])
+  @@map("addon_group_translation")
+}
+
+model AddonItemTranslation {
+  brandId     String    @map("brand_id") @db.Uuid
+  addonItemId String    @map("addon_item_id") @db.Uuid
+  language    String
+  label       String
+  addonItem   AddonItem @relation("addon_item_translation_0", fields: [addonItemId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([addonItemId, language])
+  @@index([addonItemId, brandId])
+  @@map("addon_item_translation")
+}
+
+model AddonItemPrice {
+  id                   String         @id @default(uuid(7)) @db.Uuid
+  brandId              String         @map("brand_id") @db.Uuid
+  addonItemId          String         @map("addon_item_id") @db.Uuid
+  marketId             String         @map("market_id") @db.Uuid
+  currencyCode         String         @map("currency_code") @db.Char(3)
+  deltaMinor           Int            @map("delta_minor")
+  addonItem            AddonItem      @relation("addon_item_price_0", fields: [addonItemId, brandId], references: [id, brandId], onDelete: Cascade)
+  market               Market         @relation("addon_item_price_1", fields: [marketId, brandId], references: [id, brandId], onDelete: Restrict)
+  marketByCurrencyCode MarketCurrency @relation("addon_item_price_2", fields: [marketId, currencyCode], references: [marketId, currencyCode], onDelete: Restrict)
+
+  @@unique([addonItemId, marketId, currencyCode])
+  @@index([marketId, currencyCode])
+  @@index([addonItemId, brandId])
+  @@index([marketId, brandId])
+  @@map("addon_item_price")
+}
+
+model BundleItem {
+  id                                   String     @id @default(uuid(7)) @db.Uuid
+  brandId                              String     @map("brand_id") @db.Uuid
+  bundleProductId                      String     @map("bundle_product_id") @db.Uuid
+  componentProductId                   String     @map("component_product_id") @db.Uuid
+  componentVariationId                 String?    @map("component_variation_id") @db.Uuid
+  quantity                             Int        @default(1)
+  sortOrder                            Int        @default(0) @map("sort_order")
+  bundleProduct                        Product    @relation("bundle_item_0", fields: [bundleProductId, brandId], references: [id, brandId], onDelete: Cascade)
+  componentProduct                     Product    @relation("bundle_item_1", fields: [componentProductId, brandId], references: [id, brandId], onDelete: Restrict)
+  componentVariation                   Variation? @relation("bundle_item_2", fields: [componentVariationId, brandId], references: [id, brandId], onDelete: Restrict)
+  componentVariationByComponentProduct Variation? @relation("bundle_item_3", fields: [componentVariationId, componentProductId], references: [id, productId], onDelete: Restrict)
+
+  @@index([bundleProductId])
+  @@index([componentProductId])
+  @@index([componentVariationId, componentProductId])
+  @@index([bundleProductId, brandId])
+  @@index([componentProductId, brandId])
+  @@index([componentVariationId, brandId])
+  @@map("bundle_item")
+}
+
+model MediaAsset {
+  id                         String                  @id @default(uuid(7)) @db.Uuid
+  brandId                    String                  @map("brand_id") @db.Uuid
+  storageKey                 String                  @map("storage_key")
+  originalFilename           String                  @map("original_filename")
+  contentType                String                  @map("content_type")
+  byteSize                   Int                     @map("byte_size")
+  width                      Int?
+  height                     Int?
+  sha256                     String
+  status                     MediaStatus             @default(UPLOADED)
+  createdById                String?                 @map("created_by_id") @db.Uuid
+  createdAt                  DateTime                @default(now()) @map("created_at") @db.Timestamptz()
+  ProductMediaMediaAssetRel1 ProductMedia[]          @relation("product_media_1")
+  CategoryMediaAssetRel2     Category[]              @relation("category_2")
+  VariationMediaAssetRel1    Variation[]             @relation("variation_1")
+  brand                      Brand                   @relation("media_asset_0", fields: [brandId], references: [id], onDelete: Restrict)
+  translations               MediaAssetTranslation[] @relation("media_asset_translation_0")
+  variants                   MediaVariant[]          @relation("media_variant_0")
+
+  @@unique([id, brandId])
+  @@unique([brandId, sha256])
+  @@unique([storageKey])
+  @@map("media_asset")
+}
+
+model MediaAssetTranslation {
+  brandId      String     @map("brand_id") @db.Uuid
+  mediaAssetId String     @map("media_asset_id") @db.Uuid
+  language     String
+  altText      String     @map("alt_text")
+  mediaAsset   MediaAsset @relation("media_asset_translation_0", fields: [mediaAssetId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([mediaAssetId, language])
+  @@index([mediaAssetId, brandId])
+  @@map("media_asset_translation")
+}
+
+model MediaVariant {
+  brandId      String     @map("brand_id") @db.Uuid
+  mediaAssetId String     @map("media_asset_id") @db.Uuid
+  kind         String
+  storageKey   String     @map("storage_key")
+  width        Int
+  height       Int
+  contentType  String     @map("content_type")
+  mediaAsset   MediaAsset @relation("media_variant_0", fields: [mediaAssetId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([mediaAssetId, kind])
+  @@unique([storageKey])
+  @@index([mediaAssetId, brandId])
+  @@map("media_variant")
+}
+
+model CatalogSlugHistory {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  brandId    String   @map("brand_id") @db.Uuid
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id") @db.Uuid
+  language   String
+  slug       String
+  retiredAt  DateTime @default(now()) @map("retired_at") @db.Timestamptz()
+  brand      Brand    @relation("catalog_slug_history_0", fields: [brandId], references: [id], onDelete: Restrict)
+
+  @@unique([brandId, entityType, language, slug])
+  @@index([entityType, entityId])
+  @@map("catalog_slug_history")
 }

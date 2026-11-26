@@ -28,6 +28,42 @@ describe('permission catalog', () => {
   });
 });
 
+describe('catalog permissions (Phase 3)', () => {
+  it('defines the catalog keys the product engine relies on', () => {
+    for (const k of [
+      'products.view',
+      'products.create',
+      'products.edit',
+      'products.delete',
+      'products.publish',
+      'pricing.edit',
+      'taxonomy.manage',
+      'media.manage',
+    ]) {
+      expect(isCatalogPermission(k)).toBe(true);
+    }
+  });
+
+  it('grants catalog management only to the Catalog Manager and the Super Admin, read access more widely', () => {
+    const holders = (key: string) =>
+      ROLE_TEMPLATES.filter((t) => (t.permissions as readonly string[]).includes(key)).map(
+        (t) => t.systemKey,
+      );
+    for (const key of ['products.create', 'products.edit', 'products.delete', 'taxonomy.manage']) {
+      expect(holders(key).sort()).toEqual(['catalog_manager', SUPER_ADMIN_SYSTEM_KEY].sort());
+    }
+    expect(holders('pricing.edit').sort()).toEqual(
+      ['catalog_manager', SUPER_ADMIN_SYSTEM_KEY].sort(),
+    );
+    expect(holders('products.publish').sort()).toEqual(
+      ['catalog_manager', SUPER_ADMIN_SYSTEM_KEY].sort(),
+    );
+    expect(holders('products.view')).toEqual(
+      expect.arrayContaining(['branch_manager', 'catalog_manager', 'inventory_manager']),
+    );
+  });
+});
+
 describe('role templates', () => {
   const byKey = new Map(ROLE_TEMPLATES.map((t) => [t.systemKey, t]));
 
