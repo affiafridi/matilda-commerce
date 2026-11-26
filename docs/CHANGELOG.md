@@ -2,6 +2,11 @@
 
 Records important project changes. Newest first.
 
+## 2026-11-26 — Phase 4 plan drafted
+
+- Owner approved Phase 3 ("Approve Phase 3, start Phase 4"); Phase 3 marked complete.
+- Added `docs/PHASE-4-PLAN.md` (draft): scope, domain model, services, permissions, API, screens, steps 4.1 to 4.13, decisions D4-01 to D4-16, open questions and risks. No code or schema change.
+
 ## 2026-11-26 — Phase 3, step 3.12 (hardening)
 
 - Owner approved step 3.11 ("Approve, start 3.12").

@@ -2,7 +2,11 @@
 
 Last updated: 2026-11-25
 
-## Phase 3 status (2026-11-26): IN PROGRESS (step 3.12 done, awaiting owner approval before Phase 4)
+## Phase 4 status (2026-11-26): PLAN DRAFTED, awaiting owner approval
+
+[PHASE-4-PLAN.md](PHASE-4-PLAN.md) covers inventory, reservations, delivery areas, zones, slots, restrictions and branch assignment in steps 4.1 to 4.13 with decisions D4-01 to D4-16. No code has been written. Next: your review of the plan and the questions in its section 10.
+
+## Phase 3 status (2026-11-26): COMPLETE, approved by the owner ("Approve Phase 3, start Phase 4")
 
 The owner approved Phase 2 and told me to start Phase 3. A draft plan with scope, domain model, steps 3.1 to 3.12 and decisions D3-01 to D3-15 is in [PHASE-3-PLAN.md](PHASE-3-PLAN.md). The owner approved the plan on 2026-11-25 ("Approve, start 3.1").
 
