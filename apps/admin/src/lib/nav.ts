@@ -4,7 +4,18 @@
  * convenience: every API call is still authorized by the server.
  */
 export type NavIcon =
-  'home' | 'brands' | 'markets' | 'branches' | 'customers' | 'employees' | 'roles' | 'audit';
+  | 'home'
+  | 'brands'
+  | 'markets'
+  | 'branches'
+  | 'customers'
+  | 'employees'
+  | 'roles'
+  | 'audit'
+  | 'products'
+  | 'taxonomy'
+  | 'attributes'
+  | 'media';
 
 export interface NavItem {
   id: string;
@@ -55,6 +66,60 @@ export const NAV: readonly NavGroup[] = [
         href: '/branches',
         icon: 'branches',
         permission: 'branches.view',
+        built: true,
+      },
+    ],
+  },
+  {
+    id: 'catalog',
+    label: 'Catalog',
+    items: [
+      {
+        id: 'products',
+        label: 'Products',
+        href: '/products',
+        icon: 'products',
+        permission: 'products.view',
+        built: true,
+      },
+      {
+        id: 'categories',
+        label: 'Categories',
+        href: '/categories',
+        icon: 'taxonomy',
+        permission: 'products.view',
+        built: true,
+      },
+      {
+        id: 'collections',
+        label: 'Collections',
+        href: '/collections',
+        icon: 'taxonomy',
+        permission: 'products.view',
+        built: true,
+      },
+      {
+        id: 'tags',
+        label: 'Tags',
+        href: '/tags',
+        icon: 'taxonomy',
+        permission: 'products.view',
+        built: true,
+      },
+      {
+        id: 'attributes',
+        label: 'Attributes',
+        href: '/attributes',
+        icon: 'attributes',
+        permission: 'products.view',
+        built: true,
+      },
+      {
+        id: 'media',
+        label: 'Media library',
+        href: '/media',
+        icon: 'media',
+        permission: 'media.manage',
         built: true,
       },
     ],

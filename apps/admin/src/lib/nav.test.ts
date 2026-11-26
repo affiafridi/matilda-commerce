@@ -42,6 +42,6 @@ test('a person with no permissions still gets the ungated items', () => {
 
 test('the real catalog only references permissions that exist as view keys', () => {
   for (const item of NAV.flatMap((g) => g.items)) {
-    if (item.permission) assert.match(item.permission, /^[a-z]+\.view$/);
+    if (item.permission) assert.match(item.permission, /^[a-z]+\.(view|manage)$/);
   }
 });

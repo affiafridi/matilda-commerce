@@ -2,6 +2,28 @@
 
 Records important project changes. Newest first.
 
+## 2026-11-26 — Phase 3, step 3.12 (hardening)
+
+- Owner approved step 3.11 ("Approve, start 3.12").
+- New tests: `catalog-hardening.int-spec.ts` (route table coverage and cross-brand HTTP matrix, 7) and `catalog-performance.int-spec.ts` (5,000 products, 2). Integration total 405.
+- Fix: the public product list now pages in the database for featured and newest orders instead of loading every product; response shape unchanged.
+- Dependency audit: nothing in production; 5 moderate advisories in developer tooling only. No schema change, no new dependency.
+
+## 2026-11-26 — Phase 3, step 3.11 (admin catalog screens)
+
+- Owner approved step 3.10 ("Approve, start 3.11").
+- New admin screens: Products (list, new, tabbed editor), Categories, Collections, Tags, Attributes, Media library, with a Catalog navigation group. The HTTP client now accepts file uploads.
+- Playwright `catalog.e2e.ts` added (brand needed, create tag and draft product, Catalog Manager brand lock and cross-brand 403, Branch Manager sees no catalog menu).
+- No schema change, no new dependency. Admin E2E 14 of 14; integration 396; unit 132 (API) and 19 (admin).
+
+## 2026-11-26 — Phase 3, step 3.10 (public catalog read API)
+
+- Owner approved step 3.9 ("Approve, start 3.10"); the Phase 3 work through 3.9 was committed and pushed first (`3616974`).
+- New public routes `GET /api/v1/catalog/categories`, `/collections`, `/products`, `/products/:slug`, resolved from the request host with the existing tenant guard.
+- Visibility: published, inside the publish window, sold in the market and priced there. No internal fields. Language from the market's list with English fallback.
+- Responses are cacheable for 30 seconds; the in-process cache key includes brand, market and language.
+- No schema change and no new dependency. Tests: `public-catalog.int-spec.ts` (9) and `public-catalog.cache.spec.ts` (5); integration total 396.
+
 ## 2026-11-26 — Phase 3, step 3.9 (media)
 
 - Owner approved step 3.8 ("Approve, start 3.9").

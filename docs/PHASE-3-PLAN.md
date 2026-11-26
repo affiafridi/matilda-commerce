@@ -1,6 +1,6 @@
 # Phase 3 Plan: Product and Catalog Engine
 
-**Status: APPROVED by the owner on 2026-11-25 ("Approve, start 3.1"), including decisions D3-01 to D3-15 as recommended. Steps 3.1 and 3.2 are done and 3.2 was approved ("Approve, start 3.3"); step 3.3 was approved ("Approve, start 3.4"); step 3.4 was approved ("Approve, start 3.5"); step 3.5 was approved ("Approve, start 3.6"); step 3.6 was approved ("Approve, start 3.7"); step 3.7 was approved ("Approve, start 3.8"); step 3.8 was approved ("Approve, start 3.9"); step 3.9 is done and awaits the owner's review before 3.10.** Live status: [PROGRESS.md](PROGRESS.md).
+**Status: APPROVED by the owner on 2026-11-25 ("Approve, start 3.1"), including decisions D3-01 to D3-15 as recommended. Steps 3.1 and 3.2 are done and 3.2 was approved ("Approve, start 3.3"); step 3.3 was approved ("Approve, start 3.4"); step 3.4 was approved ("Approve, start 3.5"); step 3.5 was approved ("Approve, start 3.6"); step 3.6 was approved ("Approve, start 3.7"); step 3.7 was approved ("Approve, start 3.8"); step 3.8 was approved ("Approve, start 3.9"); step 3.9 was approved ("Approve, start 3.10"); step 3.10 was approved ("Approve, start 3.11"); step 3.11 was approved ("Approve, start 3.12"); step 3.12 is done and awaits the owner's approval before Phase 4.** Live status: [PROGRESS.md](PROGRESS.md).
 
 Labels: **[Approved]** is from the owner's master prompt; **[Proposed]** needs review; **[Open]** is unresolved.
 
@@ -63,9 +63,9 @@ Products (table with search, filters, status; editor with tabs for details, tran
 | 3.7 | Customization options and conditional rules | |
 | 3.8 | Add-ons and bundles | |
 | 3.9 | Media (storage adapter, upload validation, library, gallery and variation images) | Done (R2 adapter and category images deferred) |
-| 3.10 | Public catalog read API with brand, market and language resolution and cache keys | |
-| 3.11 | Admin screens for all of the above, Playwright E2E | **Owner reviews screens** |
-| 3.12 | Hardening: cross-brand isolation matrix for every catalog table, route coverage, audit, performance of listing queries, dependency audit, docs | **Owner approval before Phase 4** |
+| 3.10 | Public catalog read API with brand, market and language resolution and cache keys | Done |
+| 3.11 | Admin screens for all of the above, Playwright E2E | Done and approved |
+| 3.12 | Hardening: cross-brand isolation matrix for every catalog table, route coverage, audit, performance of listing queries, dependency audit, docs | Done, **owner approval before Phase 4** |
 
 Every step ends green on `pnpm check` and the database suites, updates the docs (`PROGRESS`, `CHANGELOG`, `DECISIONS`, `API`, `DATABASE`, `TESTING`, `ROADMAP`) and does not start the next phase.
 

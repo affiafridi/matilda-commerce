@@ -65,6 +65,8 @@ const TAG_TONE: Record<string, string> = {
 
 const STATUS_TONE: Record<string, keyof typeof TAG_TONE> = {
   ACTIVE: 'ok',
+  PUBLISHED: 'ok',
+  ARCHIVED: 'off',
   SUCCESS: 'ok',
   INVITED: 'warn',
   DRAFT: 'warn',

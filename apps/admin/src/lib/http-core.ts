@@ -45,14 +45,15 @@ export function createHttp(deps: HttpDeps = {}) {
     extra?: Record<string, string>,
   ): Promise<Response> {
     const headers: Record<string, string> = { Accept: 'application/json', ...extra };
-    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+    if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
     if (method !== 'GET' && csrf && !PRE_SESSION.has(path)) headers['X-CSRF-Token'] = csrf;
     return doFetch(`${base}${path}`, {
       method,
       headers,
       credentials: 'same-origin',
       cache: 'no-store',
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      ...(body !== undefined ? { body: isForm ? (body as FormData) : JSON.stringify(body) } : {}),
     });
   }
 

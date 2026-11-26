@@ -5,11 +5,15 @@ import {
   ChevronDown,
   ClipboardList,
   Globe2,
+  FolderTree,
   Home,
+  Image as ImageIcon,
   Menu,
+  Package,
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
+  SlidersHorizontal,
   Store,
   UserRound,
   Users,
@@ -48,6 +52,10 @@ const ICONS: Record<NavIcon, ComponentType<{ size?: number; 'aria-hidden'?: bool
   employees: UserRound,
   roles: ShieldCheck,
   audit: ClipboardList,
+  products: Package,
+  taxonomy: FolderTree,
+  attributes: SlidersHorizontal,
+  media: ImageIcon,
 };
 
 const COLLAPSE_KEY = 'matilda-admin-nav-collapsed';
