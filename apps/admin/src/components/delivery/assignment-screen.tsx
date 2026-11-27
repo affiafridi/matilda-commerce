@@ -56,14 +56,20 @@ const RULE_LABEL: Record<string, [string, string]> = {
     'Covers the delivery area',
     'A branch must serve the zone of the address. Always required.',
   ],
-  HAS_STOCK: ['Has the stock', 'A branch must hold every item. Always required.'],
+  HAS_STOCK: ['Has the items in stock', 'The branch must hold every item. Always required.'],
   OPEN_IN_TIME: [
     'Can make it in time',
     'The branch must be open and have a free slot place. Always required.',
   ],
-  PRIORITY: ['Zone priority', 'Prefer the branch with the lowest priority number in the zone.'],
-  CLOSEST: ['Closest to the customer', 'Prefer the nearest branch. Needs the customer location.'],
-  LEAST_LOADED: ['Fewest orders booked', 'Prefer the branch with the lightest day.'],
+  PRIORITY: [
+    'Zone priority',
+    'Prefer the branch ranked first for the zone (set on the Zones screen).',
+  ],
+  CLOSEST: [
+    'Closest to the customer',
+    "Prefer the nearest branch. Needs the customer's map location.",
+  ],
+  LEAST_LOADED: ['Least busy', 'Prefer the branch with the fewest orders booked that day.'],
 };
 const REASON: Record<string, string> = {
   AREA_NOT_COVERED: 'We do not deliver to this area.',
@@ -78,7 +84,10 @@ export function AssignmentScreen() {
 
   return (
     <>
-      <PageHeader title="Assignment and tester" />
+      <PageHeader
+        title="Branch assignment"
+        lede="Decide which branch prepares an order when more than one could, and try a delivery to see exactly what a customer would be offered."
+      />
       {!brandId ? (
         <NeedsBrand ready={ready} what="Assignment rules" />
       ) : (
@@ -138,12 +147,10 @@ function RulesEditor({ marketId }: { marketId: string }) {
   });
 
   return (
-    <Section title="Which branch gets the order">
-      <p className="mb-3 max-w-prose text-[13px] text-muted">
-        A branch is eligible only if it covers the address, has the stock and can deliver in time.
-        Among eligible branches the ranking rules below are tried in order. With no ranking rule,
-        the zone priority decides.
-      </p>
+    <Section
+      title="How a branch is chosen"
+      description="A branch can only get an order if it delivers to the address, has the stock and is open in time. When several branches can, the preferences below are applied in order. With none, the zone's branch priority decides."
+    >
       {error && (
         <Alert tone="danger" className="mb-3">
           {error}
@@ -151,7 +158,7 @@ function RulesEditor({ marketId }: { marketId: string }) {
       )}
       {saved && (
         <Alert tone="info" className="mb-3">
-          Assignment rules saved.
+          Preferences saved.
         </Alert>
       )}
       {loaded.isError && (
@@ -212,7 +219,9 @@ function RulesEditor({ marketId }: { marketId: string }) {
           </li>
         ))}
         {rules.length === 0 && !loaded.isPending && (
-          <li className="py-3 text-[13px] text-muted">No rules yet: zone priority decides.</li>
+          <li className="py-3 text-[13px] text-muted">
+            No preferences yet: the zone priority decides.
+          </li>
         )}
       </ol>
       {canManage && (
@@ -220,7 +229,7 @@ function RulesEditor({ marketId }: { marketId: string }) {
           {missing.length > 0 && (
             <SelectField
               compact
-              label="Add a rule"
+              label="Add a preference"
               value=""
               onChange={(e) =>
                 e.target.value &&
@@ -236,7 +245,7 @@ function RulesEditor({ marketId }: { marketId: string }) {
             </SelectField>
           )}
           <Button variant="primary" busy={save.isPending} onClick={() => save.mutate()}>
-            Save rules
+            Save preferences
           </Button>
         </div>
       )}
@@ -326,17 +335,16 @@ function Tester({ marketId }: { marketId: string }) {
   const [picked, setPicked] = useState<{ date: string; slotId: string } | null>(null);
 
   return (
-    <Section title="Test a delivery">
-      <p className="mb-3 max-w-prose text-[13px] text-muted">
-        Check what a customer would be offered for a cart and an address, and which branch would get
-        the order. Nothing is booked or changed by testing.
-      </p>
+    <Section
+      title="Try a delivery"
+      description="Pick an address and a product to see the dates and slots a customer would be offered, and which branch would get the order. Nothing is booked or changed."
+    >
       {error && (
         <Alert tone="danger" className="mb-3">
           {error}
         </Alert>
       )}
-      <div className="max-w-md">
+      <div className="max-w-xl">
         <SelectField
           label="Delivery area"
           value={areaId}

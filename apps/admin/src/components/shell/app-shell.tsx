@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ClipboardList,
   Boxes,
+  ClipboardCheck,
   CalendarDays,
   Ban,
   Clock,
@@ -74,6 +75,7 @@ const ICONS: Record<NavIcon, ComponentType<{ size?: number; 'aria-hidden'?: bool
   restrictions: Ban,
   calendar: CalendarDays,
   assignment: Route,
+  setup: ClipboardCheck,
 };
 
 const COLLAPSE_KEY = 'matilda-admin-nav-collapsed';

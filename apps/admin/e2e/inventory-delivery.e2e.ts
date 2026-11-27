@@ -77,14 +77,14 @@ test.describe('Super Admin', () => {
     await stepUpIfAsked(page);
     await expect(page.getByRole('button', { name: method })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Add charge' }).click();
+    await page.getByRole('button', { name: 'Add fee' }).click();
     drawer = page.getByRole('dialog');
     await drawer.getByLabel('Zone').selectOption({ label: zone });
     await drawer.getByLabel('Method').selectOption({ label: method });
     await drawer.getByLabel(/^Fee/).fill('25');
-    await drawer.getByRole('button', { name: 'Save charge' }).click();
+    await drawer.getByRole('button', { name: 'Save fee' }).click();
     await stepUpIfAsked(page);
-    await expect(page.getByRole('table', { name: 'Delivery charges' })).toContainText('25.00');
+    await expect(page.getByRole('table', { name: 'Delivery fees' })).toContainText('25.00');
 
     await page.goto('/delivery/slots');
     await page.getByRole('button', { name: 'Add slot' }).click();
@@ -103,14 +103,27 @@ test.describe('Super Admin', () => {
     await page
       .getByRole('combobox', { name: 'Brand', exact: true })
       .selectOption({ label: 'Matilda Flower' });
-    await page.getByLabel('Monday').fill('09:00-18:00');
+    const monday = page.getByRole('switch', { name: 'Monday' });
+    if (!(await monday.isChecked())) await monday.check();
+    await page.getByLabel('Monday opens').fill('09:00');
+    await page.getByLabel('Monday closes').fill('18:00');
     await page.getByRole('button', { name: 'Save opening hours' }).click();
     await stepUpIfAsked(page);
     await expect(page.getByText('Opening hours saved.')).toBeVisible();
 
-    await page.getByLabel('Monday').fill('9 to 6');
+    await page.getByLabel('Monday closes').fill('08:00');
     await page.getByRole('button', { name: 'Save opening hours' }).click();
-    await expect(page.getByRole('alert').first()).toContainText(/09:00-18:00/);
+    await expect(page.getByRole('alert').first()).toContainText(/closing time must be after/);
+  });
+
+  test('shows the delivery setup checklist', async ({ page }) => {
+    await page.goto('/delivery/setup');
+    await page
+      .getByRole('combobox', { name: 'Brand', exact: true })
+      .selectOption({ label: 'Matilda Flower' });
+    await expect(page.getByRole('heading', { name: 'Delivery setup', level: 1 })).toBeVisible();
+    await expect(page.getByText('Create delivery zones')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open branch calendar' })).toBeVisible();
   });
 
   test('tests availability and shows the assignment rules', async ({ page }) => {
@@ -118,7 +131,7 @@ test.describe('Super Admin', () => {
     await page
       .getByRole('combobox', { name: 'Brand', exact: true })
       .selectOption({ label: 'Matilda Flower' });
-    await expect(page.getByRole('heading', { name: 'Which branch gets the order' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'How a branch is chosen' })).toBeVisible();
     await page.getByRole('button', { name: 'Check availability' }).click();
     await expect(page.getByRole('alert').first()).toContainText(/area/i);
   });

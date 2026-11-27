@@ -20,8 +20,10 @@ export function PageHeader({
   crumbs,
   actions,
   status,
+  lede,
 }: {
   title: string;
+  lede?: string;
   crumbs?: Array<{ label: string; href?: string }>;
   actions?: ReactNode;
   status?: ReactNode;
@@ -52,6 +54,7 @@ export function PageHeader({
         <div className="flex-1" />
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
+      {lede && <p className="mt-1 max-w-prose text-[13px] text-muted">{lede}</p>}
     </header>
   );
 }
@@ -408,24 +411,43 @@ export function Drawer({
 
 export function Section({
   title,
+  description,
   action,
   children,
 }: {
   title: string;
+  description?: string;
   action?: ReactNode;
   children: ReactNode;
 }) {
   const id = useId();
   return (
-    <section aria-labelledby={id} className="mb-8">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 id={id} className="text-[13px] font-semibold">
-          {title}
-        </h2>
+    <section aria-labelledby={id} className="mb-6 rounded-md border border-line bg-surface">
+      <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-3">
+        <div>
+          <h2 id={id} className="text-sm font-semibold text-ink">
+            {title}
+          </h2>
+          {description && <p className="mt-0.5 max-w-prose text-xs text-muted">{description}</p>}
+        </div>
         {action}
       </div>
-      {children}
+      <div className="px-5 py-4">{children}</div>
     </section>
+  );
+}
+
+/** Fields side by side on wide screens and stacked on narrow ones, all on one line. */
+export function Fields({ children, columns = 2 }: { children: ReactNode; columns?: 2 | 3 }) {
+  return (
+    <div
+      className={cx(
+        'mt-4 grid items-start gap-x-3 gap-y-4 first:mt-0 [&>*]:!mt-0',
+        columns === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
+      )}
+    >
+      {children}
+    </div>
   );
 }
 

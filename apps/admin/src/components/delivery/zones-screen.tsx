@@ -50,7 +50,7 @@ export function ZonesScreen() {
         <>
           <p className="mb-3 max-w-prose text-[13px] text-muted">
             A zone groups the areas you deliver to and says which branches serve them. Prices are
-            set per zone and method under Methods and charges.
+            set per zone and method under Methods and fees.
           </p>
           <Toolbar>
             <MarketSelect markets={markets} value={marketId} onChange={setMarketId} />

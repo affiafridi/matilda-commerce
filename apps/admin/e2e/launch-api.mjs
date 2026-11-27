@@ -15,6 +15,8 @@ const tmp = join(here, '.tmp');
 const outbox = join(tmp, 'outbox.jsonl');
 
 process.loadEnvFile(join(apiDir, '.env'));
+// The E2E API never skips two-factor, even when the local .env switches that on for development.
+delete process.env.DEV_SKIP_MFA;
 const testUrl = process.env.TEST_DATABASE_URL;
 const testOwnerUrl = process.env.TEST_MIGRATION_DATABASE_URL;
 if (!testUrl || !testOwnerUrl) {
@@ -35,6 +37,7 @@ const env = {
   CORS_ORIGINS: 'http://localhost:3101',
   ADMIN_BASE_URL: 'http://localhost:3101',
   SWAGGER_ENABLED: 'false',
+  DEV_SKIP_MFA: 'false',
 };
 
 const require = createRequire(join(apiDir, 'package.json'));

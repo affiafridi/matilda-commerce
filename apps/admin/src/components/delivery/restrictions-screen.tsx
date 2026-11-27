@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   DataTable,
+  Fields,
   Drawer,
   PageHeader,
   SelectField,
@@ -381,22 +382,22 @@ function RestrictionDrawer({
         </SelectField>
       )}
       {condition === 'DATE_RANGE' && (
-        <div className="grid grid-cols-2 gap-3">
+        <Fields>
           <TextField
             label="From"
-            help="YYYY-MM-DD"
+            type="date"
             value={dateFrom}
             disabled={locked}
             onChange={(e) => setDateFrom(e.target.value)}
           />
           <TextField
             label="Until"
-            help="YYYY-MM-DD"
+            type="date"
             value={dateTo}
             disabled={locked}
             onChange={(e) => setDateTo(e.target.value)}
           />
-        </div>
+        </Fields>
       )}
       {condition === 'WEEKDAY' && (
         <SelectField

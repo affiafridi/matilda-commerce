@@ -2,6 +2,12 @@
 
 Records important project changes. Newest first.
 
+## 2026-11-27 — Admin screens: usability pass after the owner's first look
+
+- The owner found the Phase 4 screens hard to understand and unaligned. Fixes: a new "Delivery setup" checklist page (what to do first, what is still missing); opening hours as day switches with time pickers; date and time pickers instead of typed text; side-by-side fields now line up; sections are boxed with a plain-language description; plainer names (Methods and fees, Branch assignment, "preferences" instead of "rules").
+- Bug found while looking: the local database's built-in roles lacked the Phase 4 `branches.calendar` permission, so opening hours could not be edited. Re-running `node --env-file=.env dist/cli/seed.js` (the bootstrap seed) syncs them; the test database was already correct.
+- The E2E launcher now forces `DEV_SKIP_MFA=false`. 22 Playwright tests pass.
+
 ## 2026-11-27 — Phase 4, steps 4.9 to 4.13 (transfers, availability, assignment, admin screens, hardening)
 
 - The owner said they have not tested anything yet and will check everything once I finish, so earlier "approved" step labels now read "built; not yet reviewed by the owner" and the rest of Phase 4 was built without further per-step stops.

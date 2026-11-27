@@ -59,12 +59,12 @@ export function MethodsScreen() {
   return (
     <>
       <PageHeader
-        title="Methods and charges"
+        title="Methods and fees"
         actions={
           canManage &&
           marketId && (
             <>
-              <Button onClick={() => setCharging('new')}>Add charge</Button>
+              <Button onClick={() => setCharging('new')}>Add fee</Button>
               <Button variant="primary" onClick={() => setEditing('new')}>
                 Add method
               </Button>
@@ -116,9 +116,9 @@ export function MethodsScreen() {
               { id: 'status', header: 'Status', cell: (m) => <StatusTag value={m.status} /> },
             ]}
           />
-          <h2 className="mb-2 mt-8 text-[13px] font-semibold">Charges by zone</h2>
+          <h2 className="mb-2 mt-8 text-[13px] font-semibold">Fees by zone</h2>
           <DataTable
-            caption="Delivery charges"
+            caption="Delivery fees"
             rows={charges.data}
             rowKey={(c) => c.id}
             loading={charges.isPending && !!marketId}
@@ -126,7 +126,7 @@ export function MethodsScreen() {
               charges.isError ? errorMessage(charges.error, 'We could not load charges.') : null
             }
             onRetry={() => void charges.refetch()}
-            empty="No charges yet. Add one so a method can be offered in a zone."
+            empty="No fees yet. Add one so a method can be offered in a zone."
             columns={[
               {
                 id: 'zone',
@@ -404,7 +404,7 @@ function ChargeDrawer({
   return (
     <Drawer
       open={charge !== null}
-      title={existing ? 'Edit charge' : 'Add charge'}
+      title={existing ? 'Edit fee' : 'Add fee'}
       onClose={onClose}
       footer={
         <>
@@ -416,7 +416,7 @@ function ChargeDrawer({
           <Button onClick={onClose}>{canManage ? 'Cancel' : 'Close'}</Button>
           {canManage && (
             <Button variant="primary" busy={save.isPending} onClick={() => save.mutate()}>
-              Save charge
+              Save fee
             </Button>
           )}
         </>
@@ -477,8 +477,8 @@ function ChargeDrawer({
       />
       <ConfirmDialog
         open={removing}
-        title="Delete this charge?"
-        confirmLabel="Delete charge"
+        title="Delete this fee?"
+        confirmLabel="Delete fee"
         danger
         busy={remove.isPending}
         onConfirm={() => remove.mutate()}

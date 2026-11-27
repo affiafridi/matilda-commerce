@@ -24,7 +24,8 @@ export type NavIcon =
   | 'slots'
   | 'restrictions'
   | 'calendar'
-  | 'assignment';
+  | 'assignment'
+  | 'setup';
 
 export interface NavItem {
   id: string;
@@ -168,8 +169,16 @@ export const NAV: readonly NavGroup[] = [
     label: 'Delivery',
     items: [
       {
+        id: 'delivery-setup',
+        label: 'Delivery setup',
+        href: '/delivery/setup',
+        icon: 'setup',
+        permission: 'delivery.view',
+        built: true,
+      },
+      {
         id: 'delivery-zones',
-        label: 'Zones and areas',
+        label: 'Zones',
         href: '/delivery/zones',
         icon: 'zones',
         permission: 'delivery.view',
@@ -177,7 +186,7 @@ export const NAV: readonly NavGroup[] = [
       },
       {
         id: 'delivery-methods',
-        label: 'Methods and charges',
+        label: 'Methods and fees',
         href: '/delivery/methods',
         icon: 'methods',
         permission: 'delivery.view',
@@ -209,7 +218,7 @@ export const NAV: readonly NavGroup[] = [
       },
       {
         id: 'delivery-assignment',
-        label: 'Assignment and tester',
+        label: 'Branch assignment',
         href: '/delivery/assignment',
         icon: 'assignment',
         permission: 'delivery.view',

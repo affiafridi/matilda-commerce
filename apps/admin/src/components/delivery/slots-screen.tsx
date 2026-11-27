@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   DataTable,
+  Fields,
   Drawer,
   PageHeader,
   SelectField,
@@ -283,46 +284,55 @@ function SlotDrawer({
           </option>
         ))}
       </SelectField>
-      <div className="grid grid-cols-2 gap-3">
+      <Fields>
         <TextField
           label="Starts"
+          type="time"
           value={start}
           disabled={!canManage}
           onChange={(e) => setStart(e.target.value)}
         />
         <TextField
           label="Ends"
+          type="time"
           value={end}
           disabled={!canManage}
           onChange={(e) => setEnd(e.target.value)}
         />
-      </div>
+      </Fields>
       <TextField
-        label="Orders per day"
+        label="Orders this slot can take each day"
+        help="Once this many orders are booked for a date, customers no longer see the slot."
         inputMode="numeric"
         value={capacity}
         disabled={!canManage}
         onChange={(e) => setCapacity(e.target.value)}
       />
-      <div className="grid grid-cols-2 gap-3">
+      <p className="mt-5 text-[13px] font-semibold">Last time to order this slot</p>
+      <Fields>
+        <SelectField
+          label="Order by (day)"
+          value={cutoffDays}
+          disabled={!canManage}
+          onChange={(e) => setCutoffDays(e.target.value)}
+        >
+          <option value="0">Same day as delivery</option>
+          {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+            <option key={n} value={n}>
+              {n} day{n === 1 ? '' : 's'} before
+            </option>
+          ))}
+        </SelectField>
         <TextField
-          label="Order cutoff"
-          help="Last local time to choose this slot."
+          label="Order by (time)"
+          type="time"
           value={cutoff}
           disabled={!canManage}
           onChange={(e) => setCutoff(e.target.value)}
         />
-        <TextField
-          label="Days before"
-          help="0 means the same day."
-          inputMode="numeric"
-          value={cutoffDays}
-          disabled={!canManage}
-          onChange={(e) => setCutoffDays(e.target.value)}
-        />
-      </div>
+      </Fields>
       <fieldset className="mt-4">
-        <legend className="mb-1 text-[13px] font-medium">Offered for</legend>
+        <legend className="mb-1 text-[13px] font-medium">Offered for these delivery types</legend>
         {METHOD_KINDS.map(([v, l]) => (
           <label key={v} className="flex items-center gap-2 py-1 text-[13px]">
             <input
