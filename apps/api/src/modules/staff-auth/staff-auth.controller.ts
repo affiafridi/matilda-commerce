@@ -23,7 +23,7 @@ const code = z.string().trim().min(6).max(32);
 const password = z.string().min(1).max(256);
 const token = z.string().min(20).max(200);
 
-const loginBody = z.object({ email, password });
+const loginBody = z.object({ email, password, skipMfa: z.boolean().optional() });
 const codeBody = z.object({ code });
 const forgotBody = z.object({ email });
 const resetBody = z.object({ token, password });
@@ -42,6 +42,16 @@ export class StaffAuthController {
     @Inject(APP_ENV) private readonly env: Env,
   ) {}
 
+  @Get('options')
+  @ApiOperation({
+    summary: 'What the sign-in page may offer',
+    description:
+      'devSkipMfa is true only on a local development API started with DEV_SKIP_MFA=true.',
+  })
+  options() {
+    return { devSkipMfa: this.env.DEV_SKIP_MFA };
+  }
+
   @Post('login')
   @HttpCode(200)
   @Throttle(AUTH_LIMIT)
@@ -57,7 +67,7 @@ export class StaffAuthController {
     @Body(new ZodValidationPipe(loginBody)) body: z.infer<typeof loginBody>,
   ) {
     assertAllowedOrigin(req, this.env);
-    const issued = await this.auth.login(body.email, body.password);
+    const issued = await this.auth.login(body.email, body.password, body.skipMfa === true);
     setStaffCookie(res, this.env, issued);
     return { next: issued.next, csrfToken: issued.csrfToken };
   }

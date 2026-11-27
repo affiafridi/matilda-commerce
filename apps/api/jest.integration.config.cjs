@@ -6,6 +6,9 @@ try {
   // Variables may already be set in the environment (e.g., CI).
 }
 
+// Tests never skip two-factor, even when the developer's local .env switches that on.
+delete process.env.DEV_SKIP_MFA;
+
 module.exports = {
   rootDir: '.',
   testEnvironment: 'node',

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ApiError } from '@matilda/api-client';
 import { z } from '@matilda/validation';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -20,6 +20,17 @@ const schema = z.object({
 });
 type Values = z.infer<typeof schema>;
 
+const SKIP_KEY = 'matilda-admin-dev-skip-mfa';
+
+/** Remembers the local-development switch in this browser; works without storage too. */
+function readSkip(): boolean {
+  try {
+    return window.localStorage.getItem(SKIP_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -28,6 +39,23 @@ function SignInForm() {
   const nextQuery = next === '/' ? '' : `?next=${encodeURIComponent(next)}`;
   const session = useAuthSession();
   const [formError, setFormError] = useState<string | null>(null);
+  // Offered only when the API says it runs in local development with DEV_SKIP_MFA on.
+  const options = useQuery({
+    queryKey: ['staff-auth-options'],
+    queryFn: () => http.get<{ devSkipMfa: boolean }>('/admin/auth/options'),
+    retry: false,
+  });
+  const canSkip = options.data?.devSkipMfa === true;
+  // The switch renders only after the options load in the browser, so reading storage here is safe.
+  const [skipMfa, setSkipMfa] = useState(() => typeof window !== 'undefined' && readSkip());
+  function changeSkip(value: boolean) {
+    setSkipMfa(value);
+    try {
+      window.localStorage.setItem(SKIP_KEY, value ? '1' : '0');
+    } catch {
+      /* the switch still works for this visit */
+    }
+  }
   const {
     register,
     handleSubmit,
@@ -44,13 +72,20 @@ function SignInForm() {
   async function onSubmit(values: Values) {
     setFormError(null);
     try {
-      const result = await http.post<{ next: 'MFA_ENROLL' | 'MFA_VERIFY'; csrfToken: string }>(
+      const result = await http.post<{
+        next: 'MFA_ENROLL' | 'MFA_VERIFY' | 'DONE';
+        csrfToken: string;
+      }>(
         '/admin/auth/login',
-        values,
+        { ...values, ...(canSkip && skipMfa && { skipMfa: true }) },
         { redirectOn401: false },
       );
       http.setCsrf(result.csrfToken);
       await queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+      if (result.next === 'DONE') {
+        router.replace(next);
+        return;
+      }
       router.replace(
         `${result.next === 'MFA_ENROLL' ? '/sign-in/enroll' : '/sign-in/verify'}${nextQuery}`,
       );
@@ -104,6 +139,23 @@ function SignInForm() {
           error={errors.password?.message}
           {...register('password')}
         />
+        {canSkip && (
+          <label className="mt-4 flex cursor-pointer items-start gap-3 text-[13px] text-ink">
+            <input
+              type="checkbox"
+              role="switch"
+              className="mt-0.5 size-4"
+              checked={skipMfa}
+              onChange={(e) => changeSkip(e.target.checked)}
+            />
+            <span>
+              Skip two-factor on this computer
+              <span className="block text-xs text-muted">
+                Local development only. This option does not exist on a live server.
+              </span>
+            </span>
+          </label>
+        )}
         <Button type="submit" variant="primary" busy={isSubmitting} className="mt-6 w-full">
           Continue
         </Button>

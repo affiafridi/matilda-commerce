@@ -12,6 +12,14 @@ describe('loadEnv', () => {
     expect(env.SWAGGER_ENABLED).toBe(true);
   });
 
+  it('allows skipping two-factor only in development, and never by default', () => {
+    expect(loadEnv({}).DEV_SKIP_MFA).toBe(false);
+    expect(loadEnv({ DEV_SKIP_MFA: 'true' }).DEV_SKIP_MFA).toBe(true);
+    for (const NODE_ENV of ['test', 'staging', 'production']) {
+      expect(() => loadEnv({ NODE_ENV, DEV_SKIP_MFA: 'true' })).toThrow(/DEV_SKIP_MFA/);
+    }
+  });
+
   it('disables swagger by default in production', () => {
     const base = {
       NODE_ENV: 'production',

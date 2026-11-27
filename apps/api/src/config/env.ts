@@ -41,6 +41,8 @@ export const envSchema = z
           .filter(Boolean),
       ),
     SWAGGER_ENABLED: booleanFlag.optional(),
+    // Local development only: lets the sign-in page skip two-factor. Refused in any other environment.
+    DEV_SKIP_MFA: booleanFlag.optional(),
     // Runtime database role (matilda_app): DML only, subject to row-level security.
     DATABASE_URL: z.string().min(1).optional(),
     REDIS_URL: z.string().min(1).optional(),
@@ -80,6 +82,13 @@ export const envSchema = z
         }
       }
     }
+    if (env.DEV_SKIP_MFA && env.NODE_ENV !== 'development') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['DEV_SKIP_MFA'],
+        message: 'Skipping two-factor is allowed only when NODE_ENV=development',
+      });
+    }
     if (
       env.APP_ENCRYPTION_KEYS &&
       env.APP_ENCRYPTION_ACTIVE_KEY !== undefined &&
@@ -93,7 +102,10 @@ export const envSchema = z
     }
   });
 
-export type Env = Omit<z.infer<typeof envSchema>, 'SWAGGER_ENABLED'> & { SWAGGER_ENABLED: boolean };
+export type Env = Omit<z.infer<typeof envSchema>, 'SWAGGER_ENABLED' | 'DEV_SKIP_MFA'> & {
+  SWAGGER_ENABLED: boolean;
+  DEV_SKIP_MFA: boolean;
+};
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   const parsed = envSchema.safeParse(source);
@@ -104,7 +116,11 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     throw new Error(`Invalid environment configuration:\n${details}`);
   }
   const data = parsed.data;
-  return { ...data, SWAGGER_ENABLED: data.SWAGGER_ENABLED ?? data.NODE_ENV !== 'production' };
+  return {
+    ...data,
+    SWAGGER_ENABLED: data.SWAGGER_ENABLED ?? data.NODE_ENV !== 'production',
+    DEV_SKIP_MFA: data.DEV_SKIP_MFA === true && data.NODE_ENV === 'development',
+  };
 }
 
 export const APP_ENV = Symbol('APP_ENV');

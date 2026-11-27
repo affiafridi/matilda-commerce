@@ -18,7 +18,7 @@ const REALM = 'staff';
 const RECOVERY_CODE_COUNT = 10;
 const RECOVERY_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-export type NextStep = 'MFA_ENROLL' | 'MFA_VERIFY';
+export type NextStep = 'MFA_ENROLL' | 'MFA_VERIFY' | 'DONE';
 
 const invalidCredentials = () =>
   new ApiException(401, 'INVALID_CREDENTIALS', 'Invalid email or password.');
@@ -65,7 +65,11 @@ export class StaffAuthService {
   // ---------------------------------------------------------------- login and 2FA
 
   /** Step 1: password. Creates a pending session that grants no admin access until 2FA completes. */
-  async login(emailInput: string, password: string): Promise<IssuedSession & { next: NextStep }> {
+  async login(
+    emailInput: string,
+    password: string,
+    skipMfa = false,
+  ): Promise<IssuedSession & { next: NextStep }> {
     const email = emailInput.trim().toLowerCase();
     const ip = this.context.ip;
     await this.attempts.assertNotLocked(REALM, email, ip);
@@ -106,6 +110,14 @@ export class StaffAuthService {
       ip,
       userAgent: this.context.userAgent,
     });
+    // Local development only (DEV_SKIP_MFA is false everywhere else, and the API will not start
+    // with it on outside NODE_ENV=development): a verified session straight after the password.
+    if (skipMfa && this.env.DEV_SKIP_MFA) {
+      const issued = await this.finishLogin(session, staff.id, staff.email, {
+        mfaSkipped: true,
+      });
+      return { ...issued, next: 'DONE' };
+    }
     return { ...session, next: staff.totp?.confirmedAt ? 'MFA_VERIFY' : 'MFA_ENROLL' };
   }
 
@@ -449,9 +461,10 @@ export class StaffAuthService {
   }
 
   private async finishLogin(
-    session: SessionInfo,
+    session: Pick<SessionInfo, 'id'>,
     staffId: string,
     email: string,
+    extra?: Record<string, unknown>,
   ): Promise<IssuedSession> {
     await this.attempts.recordSuccess(REALM, email, this.context.ip);
     await this.prisma.client.staffUser.update({
@@ -464,6 +477,7 @@ export class StaffAuthService {
       targetType: 'staff_user',
       targetId: staffId,
       actor: { type: 'STAFF', id: staffId },
+      ...(extra && { after: extra }),
     });
     return issued;
   }

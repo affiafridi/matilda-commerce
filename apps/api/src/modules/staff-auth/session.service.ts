@@ -41,11 +41,11 @@ export class StaffSessionService {
   async create(
     staffUserId: string,
     meta: { ip?: string; userAgent?: string },
-  ): Promise<IssuedSession> {
+  ): Promise<IssuedSession & { id: string }> {
     const token = generateToken();
     const csrfToken = generateToken();
     const now = Date.now();
-    await this.prisma.client.staffSession.create({
+    const row = await this.prisma.client.staffSession.create({
       data: {
         staffUserId,
         tokenHash: hashToken(token),
@@ -56,7 +56,7 @@ export class StaffSessionService {
         userAgent: meta.userAgent,
       },
     });
-    return { token, csrfToken, maxAgeMs: STAFF_SESSION_POLICY.pendingAbsoluteMs };
+    return { id: row.id, token, csrfToken, maxAgeMs: STAFF_SESSION_POLICY.pendingAbsoluteMs };
   }
 
   /**
