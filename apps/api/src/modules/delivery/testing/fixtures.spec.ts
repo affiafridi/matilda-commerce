@@ -15,6 +15,8 @@ describe('delivery test fixtures', () => {
         expect(timeRangeSchema.safeParse({ start: s.start, end: s.end }).success).toBe(true);
         expect(localTimeSchema.safeParse(s.cutoff).success).toBe(true);
         expect(s.capacity).toBeGreaterThan(0);
+        // The database refuses a same-day cutoff that is not before the slot starts.
+        if (s.cutoffDaysBefore === 0) expect(s.cutoff < s.start).toBe(true);
       }
     }
   });

@@ -98,7 +98,7 @@ describe('access control (database)', () => {
     await owner.$executeRawUnsafe('DELETE FROM staff_role_assignment');
     await owner.$executeRawUnsafe('DELETE FROM staff_user');
     await owner.role.deleteMany({ where: { kind: 'CUSTOM' } });
-    await owner.$executeRawUnsafe('TRUNCATE brand, branch CASCADE');
+    await owner.$executeRawUnsafe('TRUNCATE brand, branch, delivery_area CASCADE');
     await Promise.all([owner.$disconnect(), app.$disconnect()]);
   });
 
@@ -106,7 +106,7 @@ describe('access control (database)', () => {
     await owner.$executeRawUnsafe('DELETE FROM staff_role_assignment');
     await owner.$executeRawUnsafe('DELETE FROM staff_user');
     await owner.role.deleteMany({ where: { kind: 'CUSTOM' } });
-    await owner.$executeRawUnsafe('TRUNCATE brand, branch CASCADE');
+    await owner.$executeRawUnsafe('TRUNCATE brand, branch, delivery_area CASCADE');
     await owner.country.deleteMany({ where: { iso2: 'AE' } });
     await owner.country.create({
       data: { id: ids.ae, iso2: 'AE', iso3: 'ARE', name: 'United Arab Emirates' },

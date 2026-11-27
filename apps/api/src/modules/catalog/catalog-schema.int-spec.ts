@@ -407,7 +407,7 @@ describe('catalog schema (step 3.2)', () => {
   beforeAll(async () => {
     owner = createPool(testOwnerUrl());
     app = createPool(testAppUrl());
-    await owner.query('TRUNCATE brand, branch CASCADE');
+    await owner.query('TRUNCATE brand, branch, delivery_area CASCADE');
     await asOwner(async (c) => {
       await c.query(`INSERT INTO currency (code, name, symbol, minor_unit_digits) VALUES
         ('AED','UAE Dirham','AED',2) ON CONFLICT DO NOTHING`);
@@ -447,7 +447,7 @@ describe('catalog schema (step 3.2)', () => {
   });
 
   afterAll(async () => {
-    await owner.query('TRUNCATE brand, branch CASCADE');
+    await owner.query('TRUNCATE brand, branch, delivery_area CASCADE');
     await Promise.all([owner.end(), app.end()]);
   });
 

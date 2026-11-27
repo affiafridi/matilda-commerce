@@ -21,7 +21,7 @@ describe('tenant resolution and storefront context (database)', () => {
     resolver = new TenantResolver(prisma);
     contextService = new StorefrontContextService(prisma);
 
-    await owner.query('TRUNCATE brand, branch CASCADE');
+    await owner.query('TRUNCATE brand, branch, delivery_area CASCADE');
     const db = await owner.connect();
     try {
       await db.query('BEGIN');
@@ -68,7 +68,7 @@ describe('tenant resolution and storefront context (database)', () => {
   });
 
   afterAll(async () => {
-    await owner.query('TRUNCATE brand, branch CASCADE');
+    await owner.query('TRUNCATE brand, branch, delivery_area CASCADE');
     await Promise.all([owner.end(), client.$disconnect()]);
   });
 

@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { languageCodeSchema, slugSchema, z } from '@matilda/validation';
-import type { Prisma } from '../../generated/prisma/client';
 import { ApiException } from '../../common/errors/api-exception';
-import { PrismaService } from '../../database/prisma.service';
-import { withScope } from '../../database/scope';
-import { AuditService } from '../audit/audit.service';
-import { type AdminActor, assertCan, isUniqueViolation, notFound } from '../admin/admin-common';
+import { isUniqueViolation } from '../admin/admin-common';
+import { BrandScopedAccess, type Tx } from '../admin/brand-access';
 
-export type Tx = Prisma.TransactionClient;
+export type { Tx };
 
 /** English is the required source language of every catalog text (D3-11). */
 export const REQUIRED_LANGUAGE = 'en';
@@ -43,63 +40,9 @@ export function assertTranslationSet(languages: readonly string[]): void {
   }
 }
 
-/**
- * Entry point of every catalog service call: checks the permission over the brand, opens a
- * brand-scoped transaction (row-level security applies) and confirms the brand exists. Services
- * never read or write catalog tables outside it.
- */
+/** Brand-scoped entry point of every catalog service call (see `BrandScopedAccess`). */
 @Injectable()
-export class CatalogAccess {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly audit: AuditService,
-  ) {}
-
-  /** Extra permission check inside a call (e.g. scheduling needs publish rights as well as edit). */
-  require(actor: AdminActor, brandId: string, permission: string): void {
-    assertCan(actor.grants, permission, { brandId });
-  }
-
-  async run<T>(
-    actor: AdminActor,
-    brandId: string,
-    permission: string,
-    fn: (tx: Tx) => Promise<T>,
-  ): Promise<T> {
-    assertCan(actor.grants, permission, { brandId });
-    return withScope(this.prisma.client, { brandIds: [brandId] }, async (tx) => {
-      const brand = await tx.brand.findFirst({ where: { id: brandId }, select: { id: true } });
-      if (!brand) throw notFound('Brand');
-      return fn(tx);
-    });
-  }
-
-  /** Brand-scoped read for public routes (no staff actor): the brand id comes from the URL. */
-  runPublic<T>(brandId: string, fn: (tx: Tx) => Promise<T>): Promise<T> {
-    return withScope(this.prisma.client, { brandIds: [brandId] }, fn);
-  }
-
-  record(
-    tx: Tx,
-    actor: AdminActor,
-    brandId: string,
-    action: string,
-    targetType: string,
-    targetId: string,
-    before?: unknown,
-    after?: unknown,
-  ): Promise<void> {
-    return this.audit.record(tx, {
-      action,
-      targetType,
-      targetId,
-      actor: { type: 'STAFF', id: actor.staffId },
-      brandId,
-      before,
-      after,
-    });
-  }
-}
+export class CatalogAccess extends BrandScopedAccess {}
 
 /**
  * Turns database errors that mean "the caller asked for something invalid" into API errors:

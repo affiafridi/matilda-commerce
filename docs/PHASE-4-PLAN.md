@@ -62,17 +62,17 @@ Inventory (stock by branch with adjust drawer, movement history, transfers, low-
 |---|---|---|
 | 4.1 | Foundations: permissions and role defaults, shared types and validation, module skeletons, fixtures (a Dubai flower branch and a cake branch with different hours, zones and slots), Redis and BullMQ wiring for tests | |
 | 4.2 | **Inventory and delivery schema draft** with RLS plan, then migration and seed after approval | **Owner reviews DDL** |
-| 4.3 | Locations and zones API (areas, zones, coverage, branch to zone) | |
-| 4.4 | Branch calendar (hours, closures) and delivery methods, charges and minimum orders | |
-| 4.5 | Slots with capacity and cutoffs | |
-| 4.6 | Restrictions (product, category, collection by area, date, weekday, method) | |
-| 4.7 | Stock levels, adjustments and the movement ledger | |
-| 4.8 | Reservations (stock and slot), expiry job, concurrency tests | |
-| 4.9 | Transfers between branches with discrepancy handling | |
-| 4.10 | Delivery availability service and public read API | |
-| 4.11 | Branch assignment rules and manual reassignment | |
-| 4.12 | Admin screens and Playwright E2E, including the availability tester | **Owner reviews screens** |
-| 4.13 | Hardening: isolation matrix for every new table, route coverage, audit, concurrency and performance checks, dependency audit, docs | **Owner approval before Phase 5** |
+| 4.3 | Locations and zones API (areas, zones, coverage, branch to zone) | Built; not yet reviewed by the owner |
+| 4.4 | Branch calendar (hours, closures) and delivery methods, charges and minimum orders | Built; not yet reviewed by the owner |
+| 4.5 | Slots with capacity and cutoffs | Built; not yet reviewed by the owner |
+| 4.6 | Restrictions (product, category, collection by area, date, weekday, method) | Built; not yet reviewed by the owner |
+| 4.7 | Stock levels, adjustments and the movement ledger | Built; not yet reviewed by the owner |
+| 4.8 | Reservations (stock and slot), expiry job, concurrency tests | Built; not yet reviewed by the owner |
+| 4.9 | Transfers between branches with discrepancy handling | Built; not yet reviewed by the owner |
+| 4.10 | Delivery availability service and public read API | Built; not yet reviewed by the owner |
+| 4.11 | Branch assignment rules and manual reassignment | Built; not yet reviewed by the owner |
+| 4.12 | Admin screens and Playwright E2E, including the availability tester | Built; **owner reviews screens** |
+| 4.13 | Hardening: isolation matrix for every new table, route coverage, audit, concurrency and performance checks, dependency audit, docs | Done; **owner approval before Phase 5** |
 
 Every step ends green on `pnpm check` and the database suites, updates the docs (`PROGRESS`, `CHANGELOG`, `DECISIONS`, `API`, `DATABASE`, `TESTING`, `ROADMAP`, `INVENTORY`, `DELIVERY`) and does not start the next step or phase without your approval.
 
@@ -96,6 +96,9 @@ Every step ends green on `pnpm check` and the database suites, updates the docs 
 | D4-14 | Deferred | Raw materials and recipes, batches and expiry for flowers, stock valuation and costs, CSV import and export, live GPS, rider features | Pulling them in delays the foundation |
 | D4-15 | Background jobs | BullMQ with Redis (already in the approved stack) for reservation expiry; no other queue use in this phase | A cron table in the database is possible but weaker |
 | D4-16 | Availability cache | Availability results are not cached across customers; only static configuration (zones, slots) is cached, keyed by brand, market and language | Caching dynamic capacity shows stale slots |
+| D4-17 | Transfers | A transfer moves nothing when requested. Shipping takes the shipped quantity out of the sender (ledger `TRANSFER_OUT`); receiving adds the counted quantity to the receiver (`TRANSFER_IN`, creating its stock row if needed). A difference between shipped and received needs a note and is flagged. Cancelling is possible only before shipping. The database enforces the allowed state changes | Stock is never created or lost silently, and a transfer in transit is visible on both branches |
+| D4-18 | Availability | An item is ready at preparation plus lead minutes; a cart is ready at the latest of its items. Production starts when the branch is next open and the ready time is rolled into opening hours. A branch with no hours produces nothing. A method is offered in a zone only when a charge exists for it. Today gets same-day methods, tomorrow next-day then scheduled, later dates scheduled. Customers never see branch ids or quantities | Predictable dates that follow real opening hours, and no internal data leaks to shoppers |
+| D4-19 | Assignment | A branch is eligible only if it covers the area, has the stock, is open in time and has a free slot place; this is always enforced. The ordered rules only rank eligible branches (zone priority, closest, least loaded). With no rules, zone priority decides. Closest needs customer coordinates (no maps provider yet) and is skipped without them. A manual assignment must be an eligible branch, needs a reason and is audited | Rules can reorder branches but can never send an order to a branch that cannot make it |
 
 ## 10. Information I need from you (does not block drafting)
 

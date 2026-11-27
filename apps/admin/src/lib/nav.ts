@@ -15,7 +15,16 @@ export type NavIcon =
   | 'products'
   | 'taxonomy'
   | 'attributes'
-  | 'media';
+  | 'media'
+  | 'stock'
+  | 'transfers'
+  | 'reservations'
+  | 'zones'
+  | 'methods'
+  | 'slots'
+  | 'restrictions'
+  | 'calendar'
+  | 'assignment';
 
 export interface NavItem {
   id: string;
@@ -120,6 +129,90 @@ export const NAV: readonly NavGroup[] = [
         href: '/media',
         icon: 'media',
         permission: 'media.manage',
+        built: true,
+      },
+    ],
+  },
+  {
+    id: 'inventory',
+    label: 'Inventory',
+    items: [
+      {
+        id: 'stock',
+        label: 'Stock',
+        href: '/stock',
+        icon: 'stock',
+        permission: 'inventory.view',
+        built: true,
+      },
+      {
+        id: 'transfers',
+        label: 'Transfers',
+        href: '/transfers',
+        icon: 'transfers',
+        permission: 'inventory.view',
+        built: true,
+      },
+      {
+        id: 'reservations',
+        label: 'Reservations',
+        href: '/reservations',
+        icon: 'reservations',
+        permission: 'inventory.view',
+        built: true,
+      },
+    ],
+  },
+  {
+    id: 'delivery',
+    label: 'Delivery',
+    items: [
+      {
+        id: 'delivery-zones',
+        label: 'Zones and areas',
+        href: '/delivery/zones',
+        icon: 'zones',
+        permission: 'delivery.view',
+        built: true,
+      },
+      {
+        id: 'delivery-methods',
+        label: 'Methods and charges',
+        href: '/delivery/methods',
+        icon: 'methods',
+        permission: 'delivery.view',
+        built: true,
+      },
+      {
+        id: 'delivery-slots',
+        label: 'Delivery slots',
+        href: '/delivery/slots',
+        icon: 'slots',
+        permission: 'delivery.view',
+        built: true,
+      },
+      {
+        id: 'delivery-restrictions',
+        label: 'Restrictions',
+        href: '/delivery/restrictions',
+        icon: 'restrictions',
+        permission: 'delivery.view',
+        built: true,
+      },
+      {
+        id: 'delivery-calendar',
+        label: 'Branch calendar',
+        href: '/delivery/calendar',
+        icon: 'calendar',
+        permission: 'branches.view',
+        built: true,
+      },
+      {
+        id: 'delivery-assignment',
+        label: 'Assignment and tester',
+        href: '/delivery/assignment',
+        icon: 'assignment',
+        permission: 'delivery.view',
         built: true,
       },
     ],

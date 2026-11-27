@@ -12,8 +12,10 @@ export interface FixtureSlot {
   end: string;
   /** Orders this slot accepts. */
   capacity: number;
-  /** Local time before which an order may still be placed for this slot's day. */
+  /** Local time before which an order may still be placed. */
   cutoff: string;
+  /** 0 = the cutoff is on the delivery day, 1 = the day before, and so on. */
+  cutoffDaysBefore: number;
   methods: readonly DeliveryMethodKind[];
 }
 
@@ -46,6 +48,7 @@ export const FLOWER_KITCHEN: FixtureBranch = {
       end: '12:00',
       capacity: 20,
       cutoff: '08:00',
+      cutoffDaysBefore: 0,
       methods: ['SAME_DAY', 'NEXT_DAY', 'SCHEDULED'],
     },
     {
@@ -53,6 +56,7 @@ export const FLOWER_KITCHEN: FixtureBranch = {
       end: '16:00',
       capacity: 20,
       cutoff: '12:00',
+      cutoffDaysBefore: 0,
       methods: ['SAME_DAY', 'NEXT_DAY', 'SCHEDULED'],
     },
     {
@@ -60,6 +64,7 @@ export const FLOWER_KITCHEN: FixtureBranch = {
       end: '21:00',
       capacity: 30,
       cutoff: '16:00',
+      cutoffDaysBefore: 0,
       methods: ['SAME_DAY', 'NEXT_DAY', 'SCHEDULED'],
     },
   ],
@@ -85,6 +90,7 @@ export const CAKE_KITCHEN: FixtureBranch = {
       end: '14:00',
       capacity: 6,
       cutoff: '18:00',
+      cutoffDaysBefore: 1,
       methods: ['NEXT_DAY', 'SCHEDULED'],
     },
     {
@@ -92,6 +98,7 @@ export const CAKE_KITCHEN: FixtureBranch = {
       end: '19:00',
       capacity: 6,
       cutoff: '18:00',
+      cutoffDaysBefore: 1,
       methods: ['NEXT_DAY', 'SCHEDULED'],
     },
   ],

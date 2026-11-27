@@ -39,3 +39,14 @@ export const UAE_MARKET = {
   currency: 'AED',
   languages: ['en', 'ar'],
 } as const;
+
+/** The seven emirates of the UAE (public facts). Cities and areas are entered in the admin (docs/PHASE-4-SCHEMA-DRAFT.md). */
+export const UAE_EMIRATES = [
+  { code: 'abu-dhabi', en: 'Abu Dhabi', ar: 'أبو ظبي' },
+  { code: 'dubai', en: 'Dubai', ar: 'دبي' },
+  { code: 'sharjah', en: 'Sharjah', ar: 'الشارقة' },
+  { code: 'ajman', en: 'Ajman', ar: 'عجمان' },
+  { code: 'umm-al-quwain', en: 'Umm Al Quwain', ar: 'أم القيوين' },
+  { code: 'ras-al-khaimah', en: 'Ras Al Khaimah', ar: 'رأس الخيمة' },
+  { code: 'fujairah', en: 'Fujairah', ar: 'الفجيرة' },
+] as const;

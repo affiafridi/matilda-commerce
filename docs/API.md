@@ -104,6 +104,70 @@ Under the same base path, `/products`. Same authorization model; each action nee
 - Bundles (step 3.8): `GET/PUT /products/:id/bundle` (`products.view` / `products.edit`; bundle products only). Body `items: [{productId, variationId?, quantity, sortOrder}]`. The bundle's price is its own fixed per-market price (`/prices`). Errors (422): `NOT_BUNDLE`, `COMPONENT_SELF`, `COMPONENT_NOT_FOUND`, `COMPONENT_INVALID`, `DUPLICATE_COMPONENT`, `VARIATION_REQUIRED`, `VARIATION_NOT_FOUND`, `VARIATION_NOT_ALLOWED`. Deleting a product or variation used as a component or add-on answers 409 (`PRODUCT_IN_USE`, `VARIATION_IN_USE`).
 - A product with no market is sold nowhere. Variations (3.5), prices (3.6), options (3.7), add-ons and bundles (3.8) and media (3.9) attach to products later; step 3.5 and 3.6 will add their requirements to publishing.
 
+## Delivery API (Phase 4 step 4.3)
+
+- Locations (shared tree, no brand): `GET /admin/delivery/areas?countryIso2&parentId&level` (`delivery.view`), `GET /admin/delivery/areas/:id`; platform staff only (`delivery.manage` with no brand scope): `POST` (`countryIso2, parentId?, level EMIRATE|CITY|AREA, code, sortOrder, status, translations[{language,name}]`), `PATCH /:id` (`code, sortOrder, status`), `PUT/DELETE /:id/translations/:language`, `DELETE /:id` (204). Errors: 422 `ENGLISH_REQUIRED`, `DUPLICATE_LANGUAGE`, `UNKNOWN_COUNTRY`, `PARENT_NOT_FOUND`, `AREA_TREE_INVALID` (an emirate is the top, a city sits under an emirate, an area under an emirate or a city); 409 `AREA_CODE_TAKEN`, `AREA_IN_USE` (sub-locations, zone coverage or restrictions exist).
+- Zones (over the brand in the path): `GET /admin/brands/:brandId/delivery/zones?marketId` and `/:id` (`delivery.view`); `POST` (`marketId, code, sortOrder, status, translations`), `PATCH /:id`, `PUT/DELETE /:id/translations/:language`, `PUT /:id/areas` (`areaIds`, replaces coverage), `PUT /:id/branches` (`branches:[{branchId, priority}]`, replaces serving branches), `DELETE /:id` (204) all need `delivery.manage`. A zone is `{id, marketId, code, sortOrder, status, translations, areaIds, branches}`. Errors: 404 `MARKET_NOT_FOUND`, `ZONE_NOT_FOUND`; 409 `ZONE_CODE_TAKEN`, `AREA_ALREADY_COVERED` (a location is in one zone per market), `ZONE_IN_USE` (charges, slots or restrictions exist); 422 `ENGLISH_REQUIRED`, `AREA_NOT_FOUND`, `AREA_COUNTRY_MISMATCH`, `BRANCH_NOT_FOUND` (also for a branch of another brand), `BRANCH_NOT_AVAILABLE` (branch not linked to the zone's market), `DUPLICATE_BRANCH`. Every write is audited (`delivery.area.*`, `delivery.zone.*`).
+
+### Calendar, methods and charges (step 4.4)
+
+All under `/admin/brands/:brandId/delivery`. Reads need `delivery.view`; the calendar writes need `branches.calendar`; methods and charges need `delivery.manage` (sensitive, step-up). The service checks the permission again over the record's own scope.
+
+- Hours: `GET branches/:branchId/hours` returns `{branchId, timezone, days:[{weekday 0-6 (0 = Sunday), ranges:[{start,end}]}]}` for all seven days (closed days have no ranges). `PUT` replaces the week with `days` (HH:mm local time, up to four ranges per day, no overlaps, each weekday once). A branch the brand does not serve is 404. Hours belong to the brand, so a branch shared by two brands keeps separate hours for each.
+- Closures: `GET closures?from&to&marketId&branchId` (dates `YYYY-MM-DD`), `POST closures {closedOn, marketId?, branchId?, reason?}` (not both market and branch; none means the whole brand), `DELETE closures/:id` (204). Brand and market closures need `delivery.manage`; a branch closure needs `branches.calendar` (or `delivery.manage`) over that branch.
+- Methods: `GET methods?marketId`, `GET/PATCH/DELETE methods/:id`, `POST methods {marketId, kind SAME_DAY|NEXT_DAY|SCHEDULED, code, sortOrder, status, translations}`, `PUT/DELETE methods/:id/translations/:language`. Errors: 422 `ENGLISH_REQUIRED`; 409 `METHOD_CODE_TAKEN`, `METHOD_IN_USE` (it has charges); 404 `MARKET_NOT_FOUND`.
+- Charges: `GET charges?zoneId&methodId`, `POST charges {zoneId, methodId, currencyCode, feeMinor, minimumOrderMinor = 0, freeOverMinor?}`, `PATCH charges/:id`, `DELETE charges/:id`. Amounts are whole minor units (no fractions or negatives); `freeOverMinor` cannot be below `minimumOrderMinor`. Errors: 422 `MARKET_MISMATCH`, `CURRENCY_NOT_IN_MARKET`, `THRESHOLD_BELOW_MINIMUM`; 409 `CHARGE_EXISTS`. Fees are applied by the backend at checkout (later phases), never taken from the client.
+- Audit actions: `delivery.hours.put`, `delivery.closure.create|delete`, `delivery.method.*`, `delivery.charge.*`.
+
+### Slots (step 4.5)
+
+`/admin/brands/:brandId/delivery/slots`: `GET ?marketId&branchId&zoneId&weekday` and `GET /:id` (`delivery.view`); `POST`, `PATCH /:id`, `DELETE /:id` (204) need `delivery.manage`. A slot is `{id, marketId, branchId, zoneId|null, weekday 0-6, startTime, endTime, capacity, cutoffTime, cutoffDaysBefore 0-14, methods[SAME_DAY|NEXT_DAY|SCHEDULED], status}`; times are local `HH:mm` in the branch time zone, capacity is whole orders per date, and `zoneId` empty means every zone the branch serves. Errors: 422 `SLOT_RANGE_INVALID`, `SLOT_CUTOFF_INVALID` (same-day cutoff must be before the start), `DUPLICATE_METHOD_KIND`, `MARKET_MISMATCH`, `BRANCH_NOT_AVAILABLE`; 409 `SLOT_EXISTS`, `SLOT_IN_USE` (bookings on record; set it inactive); 404 `MARKET_NOT_FOUND`, `BRANCH_NOT_FOUND`, `ZONE_NOT_FOUND`, `SLOT_NOT_FOUND`. Audit: `delivery.slot.create|update|delete`.
+
+### Restrictions (step 4.6)
+
+`/admin/brands/:brandId/delivery/restrictions`: `GET ?marketId&target&targetId&condition&status` and `GET /:id` (`delivery.view`); `POST`, `PATCH /:id` (only `note` and `status`), `DELETE /:id` (204) need `delivery.manage` (sensitive, step-up). A restriction means the target cannot be delivered when the condition matches. Body: `{marketId, target PRODUCT|CATEGORY|COLLECTION, targetId, condition, note?, status}` plus the field of the condition: `AREA` with `areaId`, `ZONE` with `zoneId`, `DATE_RANGE` with `dateFrom` and `dateTo` (`YYYY-MM-DD`, end not before start), `WEEKDAY` with `weekday` 0-6, `METHOD` with `methodKind`. To change what a rule does, delete it and add another. Errors: 404 `MARKET_NOT_FOUND`, `PRODUCT_NOT_FOUND`, `CATEGORY_NOT_FOUND`, `COLLECTION_NOT_FOUND`, `ZONE_NOT_FOUND`, `AREA_NOT_FOUND`, `RESTRICTION_NOT_FOUND`; 422 `MARKET_MISMATCH`, `AREA_COUNTRY_MISMATCH`. Deleting a zone or location that restrictions use answers 409 (`ZONE_IN_USE`, `AREA_IN_USE`). Audit: `delivery.restriction.create|update|delete`.
+
+### Inventory: stock levels and ledger (step 4.7)
+
+All under `/admin/brands/:brandId/inventory`. The route permission gates entry; the service checks `inventory.view` / `inventory.adjust` over the brand and over the branch of each stock row.
+
+- `GET settings` (`inventory.view`), `PUT settings` (`inventory.adjust` over the whole brand): `{reservationMinutes 1-240, maxExtensions 0-5, defaultOutOfStock HIDE|SHOW_UNAVAILABLE|ALLOW_BACKORDER}`. Moving the default to `ALLOW_BACKORDER` also sets it on rows that follow the default (`rowsSetToBackorder` in the answer).
+- `GET stock?branchId&productId&variationId&low&page&pageSize` returns `{items, page, pageSize, total}`; a row is `{id, branchId, productId, variationId, onHand, reserved, available, lowStockThreshold, low, outOfStock, effectiveOutOfStock}`. `POST stock {branchId, productId, variationId?, lowStockThreshold?, outOfStock?}` starts tracking at zero; `GET/PATCH stock/:id` (`lowStockThreshold`, `outOfStock`; 409 `STOCK_RESERVED` when backorder cannot be switched off yet).
+- `POST stock/:id/movements {type RECEIPT|ADJUSTMENT_IN|ADJUSTMENT_OUT|WASTAGE, quantity, reason, referenceType?, referenceId?}` (reason required except for receipts) and `POST stock/:id/count {counted, reason}` return `{movement, stock}`. `GET stock/:id/movements?limit&before` returns `{items, next}` newest first.
+- Errors: 404 `STOCK_NOT_FOUND`, `PRODUCT_NOT_FOUND`, `BRANCH_NOT_FOUND`; 409 `STOCK_ROW_EXISTS`, `INSUFFICIENT_STOCK`, `STOCK_RESERVED`; 422 `STOCK_SHAPE_INVALID` (bundle, variable product without variation, simple product with variation), `BRANCH_NOT_AVAILABLE`, `QUANTITY_TOO_LARGE`, `NO_CHANGE`. Audit: `inventory.stock.create|update|<movement type>`, `inventory.settings.put`.
+
+### Inventory: reservations (step 4.8)
+
+Under `/admin/brands/:brandId/inventory/reservations`; both routes need brand-wide inventory permissions (a branch-scoped manager gets 403).
+
+- `GET ?status=ACTIVE|COMMITTED|RELEASED|EXPIRED&limit` (`inventory.view`) returns `{stock: [{checkoutRef, status, expiresAt, lines: [{stockLevelId, quantity}]}], slots: [{checkoutRef, status, slotId, date, units, expiresAt}]}`.
+- `POST :checkoutRef/release` (`inventory.adjust`) frees an open hold; 404 when nothing is open. Audit `inventory.reservation.release`.
+- Service contract for the checkout (Phase 5, no HTTP route): `hold({brandId, marketId, checkoutRef, lines[], slot?{slotId, date, units}})`, `extend`, `confirm(brandId, checkoutRef, orderRef)`, `release`, `expireDue`. Errors: 404 `STOCK_NOT_FOUND`, `SLOT_NOT_FOUND`, `MARKET_NOT_FOUND`, `RESERVATION_NOT_FOUND`; 409 `INSUFFICIENT_STOCK`, `SLOT_FULL`, `RESERVATION_EXISTS`, `RESERVATION_EXPIRED`, `EXTENSION_LIMIT`; 422 `SLOT_DATE_MISMATCH`.
+
+### Inventory: transfers (step 4.9)
+
+Under `/admin/brands/:brandId/inventory/transfers`. Route entry needs `inventory.view` (reads) or `inventory.transfer` (writes); the service then checks the permission over the branch concerned.
+
+- `GET ?status=REQUESTED|IN_TRANSIT|RECEIVED|CANCELLED&branchId&discrepancy=true` and `GET :id`. A transfer is `{id, fromBranchId, toBranchId, status, note, shippedAt, receivedAt, createdAt, hasDiscrepancy, lines: [{id, productId, variationId, quantityRequested, quantityShipped, quantityReceived, discrepancy, difference, discrepancyNote}]}`.
+- `POST {fromBranchId, toBranchId, note?, lines: [{productId, variationId?, quantity}]}` requests a transfer (1 to 100 distinct items, branches differ).
+- `POST :id/ship {lines?: [{lineId, quantity}]}` (default: all requested quantities), `POST :id/receive {lines?: [{lineId, quantity, note?}]}` (default: the shipped quantities), `POST :id/cancel {reason?}`.
+- Errors: 409 `TRANSFER_STATE`, `INSUFFICIENT_STOCK`, `STOCK_RESERVED`; 404 `STOCK_NOT_FOUND`; 422 `SHIPPED_EXCEEDS_REQUESTED`, `NOTHING_TO_SHIP`, `DISCREPANCY_NOTE_REQUIRED`, `QUANTITY_TOO_LARGE`. Audit: `inventory.transfer.request|ship|receive|cancel`.
+
+### Delivery: availability, assignment and the tester (steps 4.10 and 4.11)
+
+Public reads (brand from the host, `Cache-Control: no-store`, no branch ids or quantities in the answers):
+
+- `GET /delivery/areas` the areas the market delivers to, with names in the shopper's language.
+- `POST /delivery/availability {areaId, lines: [{productId, variationId?, quantity}], from?, days?}` (1 to 50 lines, 1 to 31 days, default 14) returns `{deliverable, reason, zoneId, dates: [{date, slots: [{slotId, start, end, method: {id, kind}, currencyCode, feeMinor, minimumOrderMinor, freeOverMinor}]}]}`. `reason` is `AREA_NOT_COVERED`, `RESTRICTED`, `NO_BRANCH_CAN_SERVE`, `NO_SLOTS` or null. 404 `PRODUCT_NOT_FOUND`, `VARIATION_NOT_FOUND`, `AREA_NOT_FOUND`; 422 `QUANTITY_OUT_OF_RANGE`.
+- `POST /delivery/stock-status {lines}` returns `AVAILABLE`, `LOW` or `UNAVAILABLE` per line.
+
+Admin, under `/admin/brands/:brandId/delivery`:
+
+- `GET assignment-rules?marketId` returns `{marketId, rules: [{id, kind, position, status, ranks}]}`; `PUT assignment-rules {marketId, rules: [{kind, status}]}` replaces the list (`delivery.manage`, audited as `delivery.assignment_rules.put`). Kinds: `COVERS_AREA`, `HAS_STOCK`, `OPEN_IN_TIME` (always on) and `PRIORITY`, `CLOSEST`, `LEAST_LOADED` (ranking).
+- `POST availability-test {marketId, areaId, lines, from?, days?}` the same answer a shopper would get, plus the branches able to serve it (`delivery.view`).
+- `POST assignment/preview {marketId, areaId, lines, date, slotId?, location?, branchId?}` returns `{chosenBranchId, reason, rules, ranking: [{branchId, priority, loadBooked, distanceMeters}], check?}`. 409 `NO_ELIGIBLE_BRANCH`, `SLOT_UNAVAILABLE`.
+- `POST assignment/override {marketId, areaId, lines, date, slotId?, branchId, reason, reference?}` (`delivery.assign`) returns `{branchId, automaticBranchId, changed}`; 422 `BRANCH_NOT_ELIGIBLE`; audit `delivery.assignment.override`.
+
 ## Customer API (Phase 2 step 2.8)
 
 Brand comes from the host only. Cookie `matilda_customer`; mutations need a same-brand `Origin` and, when signed in, the `X-CSRF-Token` returned by login.

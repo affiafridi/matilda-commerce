@@ -2,6 +2,62 @@
 
 Records important project changes. Newest first.
 
+## 2026-11-27 — Phase 4, steps 4.9 to 4.13 (transfers, availability, assignment, admin screens, hardening)
+
+- The owner said they have not tested anything yet and will check everything once I finish, so earlier "approved" step labels now read "built; not yet reviewed by the owner" and the rest of Phase 4 was built without further per-step stops.
+- 4.9 transfers between branches (discrepancy notes); 4.10 availability service with three public reads (`/delivery/areas`, `/delivery/availability`, `/delivery/stock-status`); 4.11 assignment rules, preview and audited override.
+- 4.12 admin screens: Stock, Transfers, Reservations, Zones, Methods and charges, Slots, Restrictions, Branch calendar, Assignment and tester, with their menus.
+- 4.13 hardening: route coverage and cross-brand matrix for all inventory and delivery routes; dependency audit; docs. Decisions D4-17 to D4-19 recorded.
+- No new dependency and no migration after 4.2.
+
+## 2026-11-27 — Phase 4, step 4.8 (reservations)
+
+- Owner approved step 4.7 ("Approve, start 4.8").
+- New `ReservationsService` and `ReservationExpiryJob` in the inventory module; two staff routes under `/admin/brands/:brandId/inventory/reservations`. Documented in API.md and INVENTORY.md.
+- Tests: 27 new integration tests (one uses Redis). No new dependency, no migration.
+
+## 2026-11-27 — Phase 4, step 4.7 (stock levels and ledger API)
+
+- Owner approved step 4.6 ("Approve, start 4.7").
+- New routes `/admin/brands/:brandId/inventory/...` (settings, stock rows, movements, count). Documented in API.md.
+- `BrandScopedAccess` gained `assertReaches` and `recordFor` (moved from `DeliveryAccess`); the inventory module has its own `InventoryAccess`.
+- Tests: 17 new integration tests. No new dependency, no migration.
+
+## 2026-11-27 — Phase 4, step 4.6 (restrictions API)
+
+- Owner approved step 4.5 ("Approve, start 4.6").
+- New routes `/admin/brands/:brandId/delivery/restrictions`. Documented in API.md.
+- Tests: 8 new integration tests. No new dependency, no migration.
+
+## 2026-11-27 — Phase 4, step 4.5 (slots API)
+
+- Owner approved step 4.4 ("Approve, start 4.5").
+- New routes `/admin/brands/:brandId/delivery/slots` (CRUD). Documented in API.md.
+- Time helpers (`toTime`, `fromTime`) moved to `delivery-common`.
+- Tests: 8 new integration tests. No new dependency, no migration.
+
+## 2026-11-27 — Phase 4, step 4.4 (calendar, methods and charges API)
+
+- Owner approved step 4.3 ("Approve, start 4.4").
+- New routes under `/admin/brands/:brandId/delivery`: `branches/:branchId/hours`, `closures`, `methods`, `charges`. Documented in API.md.
+- `BrandScopedAccess.runAt` checks a permission over a market or branch scope (so branch managers keep only their own branch's calendar); `DeliveryAccess.recordFor` writes audit rows with market and branch.
+- Tests: 16 new integration tests (opening hours, closures, methods, charges, route probes). No new dependency, no migration.
+
+## 2026-11-26 — Phase 4, step 4.3 (locations and zones API)
+
+- Owner approved step 4.2 ("Approve, start 4.3").
+- New routes: `/admin/delivery/areas` (shared location tree, platform-only writes) and `/admin/brands/:brandId/delivery/zones` (zones, translations, coverage, serving branches). Documented in API.md.
+- `BrandScopedAccess` extracted to `modules/admin/brand-access.ts`; `CatalogAccess` and the new `DeliveryAccess` extend it (no behavior change for the catalog).
+- Tests: 16 new integration tests. No new dependency, no migration.
+
+## 2026-11-26 — Phase 4, step 4.2 (schema)
+
+- Owner approved step 4.1 ("Approve, start 4.2"; 4.1 committed as `7e40f0c`) and then the schema draft ("Approve as recommended").
+- Migration `inventory_delivery`: 23 tables, 9 enums, `btree_gist`, checks, triggers, exclusion constraint and row-level security; applied to development and test databases.
+- Reference seed adds the seven UAE emirates with English and Arabic names.
+- Tests: 81 new database tests (integration total 489); delivery test fixtures gained `cutoffDaysBefore`.
+- No new dependency; no API or screen yet.
+
 ## 2026-11-26 — Phase 4, step 4.1 (foundations)
 
 - Owner approved the Phase 4 plan ("Approve, start 4.1").

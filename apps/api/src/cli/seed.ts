@@ -2,7 +2,15 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
 import { withScope } from '../database/scope';
 import { syncAccessControl } from '../modules/iam/access-control-sync';
-import { BRANDS, COUNTRIES, CURRENCIES, DEV_HOSTS, LANGUAGES, UAE_MARKET } from './seed-data';
+import {
+  BRANDS,
+  COUNTRIES,
+  CURRENCIES,
+  DEV_HOSTS,
+  LANGUAGES,
+  UAE_EMIRATES,
+  UAE_MARKET,
+} from './seed-data';
 
 export type SeedTier = 'reference' | 'bootstrap' | 'dev';
 
@@ -17,10 +25,27 @@ export async function seed(client: PrismaClient, tier: SeedTier): Promise<void> 
   for (const c of COUNTRIES) {
     await client.country.upsert({ where: { iso2: c.iso2 }, create: c, update: {} });
   }
+  const uae = await client.country.findUniqueOrThrow({ where: { iso2: 'AE' } });
+  for (const [i, e] of UAE_EMIRATES.entries()) {
+    await client.deliveryArea.upsert({
+      where: { countryId_code: { countryId: uae.id, code: e.code } },
+      create: {
+        countryId: uae.id,
+        level: 'EMIRATE',
+        code: e.code,
+        sortOrder: i,
+        translations: {
+          create: [
+            { language: 'en', name: e.en },
+            { language: 'ar', name: e.ar },
+          ],
+        },
+      },
+      update: {},
+    });
+  }
   await syncAccessControl(client);
   if (tier === 'reference') return;
-
-  const uae = await client.country.findUniqueOrThrow({ where: { iso2: 'AE' } });
   await withScope(client, { brandIds: [], platform: true }, async (tx) => {
     for (const b of BRANDS) {
       const brand = await tx.brand.upsert({
