@@ -28,6 +28,7 @@ describe('loadEnv', () => {
       APP_ENCRYPTION_ACTIVE_KEY: '1',
       TRUSTED_PROXY_SECRET: 'x'.repeat(32),
       PASSWORD_PEPPER: 'p'.repeat(32),
+      QUOTE_SIGNING_SECRET: 'q'.repeat(32),
     };
     expect(loadEnv(base).SWAGGER_ENABLED).toBe(false);
     expect(loadEnv({ ...base, SWAGGER_ENABLED: 'true' }).SWAGGER_ENABLED).toBe(true);

@@ -24,6 +24,8 @@ export const createMarketBody = z.object({
   countryIso2: z.string().length(2).toUpperCase(),
   code: z.string().regex(/^[a-z]{2,8}$/, 'Two to eight lowercase letters'),
   timezone: z.string().min(3).max(64),
+  taxRateBps: z.number().int().min(0).max(10000).default(0),
+  taxInclusive: z.boolean().default(true),
   status: z.enum(['DRAFT', 'ACTIVE', 'SUSPENDED']).default('DRAFT'),
   currencies,
   languages,
@@ -31,6 +33,8 @@ export const createMarketBody = z.object({
 export const updateMarketBody = z
   .object({
     timezone: z.string().min(3).max(64),
+    taxRateBps: z.number().int().min(0).max(10000),
+    taxInclusive: z.boolean(),
     status: z.enum(['DRAFT', 'ACTIVE', 'SUSPENDED']),
     currencies,
     languages,
@@ -96,6 +100,8 @@ export class MarketsService {
               countryId: country.id,
               code: input.code,
               timezone: input.timezone,
+              taxRateBps: input.taxRateBps,
+              taxInclusive: input.taxInclusive,
               status: input.status,
               currencies: {
                 create: input.currencies.map((c) => ({
@@ -163,7 +169,12 @@ export class MarketsService {
           }
           const market = await tx.market.update({
             where: { id },
-            data: { timezone: patch.timezone, status: patch.status },
+            data: {
+              timezone: patch.timezone,
+              status: patch.status,
+              taxRateBps: patch.taxRateBps,
+              taxInclusive: patch.taxInclusive,
+            },
             include: INCLUDE,
           });
           await this.audit.record(tx, {
@@ -176,6 +187,8 @@ export class MarketsService {
             before: {
               timezone: current.timezone,
               status: current.status,
+              taxRateBps: current.taxRateBps,
+              taxInclusive: current.taxInclusive,
               currencies: current.currencies,
               languages: current.languages,
             },

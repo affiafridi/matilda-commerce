@@ -16,6 +16,7 @@ import { withScope } from '../../database/scope';
 import type { Prisma } from '../../generated/prisma/client';
 import type { Tx } from '../admin/brand-access';
 import type { PricingInputLine } from '../pricing/pricing-engine';
+import { QuoteSigner } from '../pricing/quote-signer.service';
 import { type Quote, type QuoteContext, QuoteService } from '../pricing/quote.service';
 import type { CouponReason } from '../promotions/promotion-evaluator.service';
 import type { ResolvedTenant } from '../tenancy/tenant-resolver.service';
@@ -54,6 +55,12 @@ export interface CartView {
     totals: QuoteTotals;
     /** Offers applied, the coupon outcome (a stored code that stopped working is REJECTED) and free delivery. */
     promotions: Quote['promotions'];
+    /** Fee for the chosen area and method (null until both are chosen) and why it may be zero or refused. */
+    delivery: Quote['delivery'];
+    tax: Quote['tax'];
+    /** HMAC over the amounts and when it stops being offered (D5-01); the order step recomputes regardless. */
+    expiresAt: Date;
+    signature: string;
   };
 }
 
@@ -144,6 +151,7 @@ export class CartService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly quotes: QuoteService,
+    private readonly signer: QuoteSigner,
   ) {}
 
   private scoped<T>(brandId: string, fn: (tx: Tx) => Promise<T>): Promise<T> {
@@ -553,9 +561,11 @@ export class CartService {
         brandId,
         customerId: cart.customerId,
         couponCode: cart.couponCode,
+        delivery: { areaId: cart.deliveryAreaId, methodId: cart.deliveryMethodId },
       },
       inputs,
     );
+    const signed = this.signer.sign(brandId, quote);
     return {
       id: cart.id,
       marketId: cart.marketId,
@@ -579,7 +589,14 @@ export class CartService {
             .map((e) => ({ field: e.field, message: e.message })),
         };
       }),
-      quote: { lines: quote.lines, totals: quote.totals, promotions: quote.promotions },
+      quote: {
+        lines: quote.lines,
+        totals: quote.totals,
+        promotions: quote.promotions,
+        delivery: quote.delivery,
+        tax: quote.tax,
+        ...signed,
+      },
     };
   }
 }

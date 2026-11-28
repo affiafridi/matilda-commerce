@@ -316,6 +316,11 @@ describe('cart (HTTP + database)', () => {
     expect(cart.lines[0]).toMatchObject({ productId: id.rose, quantity: 2, issues: [] });
     expect(cart.quote.lines[0]).toMatchObject({ unitMinor: 25000, totalMinor: 50000 });
     expect(cart.quote.totals.totalMinor).toBe(50000);
+    // The quote is signed and expires in 15 minutes; no delivery is quoted before an area and method are chosen.
+    expect(cart.quote.signature).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(Date.parse(cart.quote.expiresAt) - Date.now()).toBeGreaterThan(14 * 60 * 1000);
+    expect(cart.quote.delivery).toBeNull();
+    expect(cart.quote.tax).toEqual({ rateBps: 0, inclusive: true });
 
     const rows = await cartRows();
     expect(rows).toHaveLength(1);

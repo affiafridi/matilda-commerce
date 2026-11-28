@@ -6,7 +6,7 @@ PostgreSQL + Prisma. One centralized database per environment (Development, Stag
 
 | Group | Entities |
 |---|---|
-| Tenancy | Brand, Domain, Country, Market, Branch, BranchBrand (branch↔brand/market) |
+| Tenancy | Brand, Domain, Country, Market (with `tax_rate_bps` and `tax_inclusive`), Branch, BranchBrand (branch↔brand/market) |
 | Identity | StaffUser, Customer, Role, Permission, RolePermission, RoleAssignment (with brand/market/branch scope), Session, AuditLog |
 | Catalog | Product, ProductTranslation, Category, CategoryTranslation, Collection, Tag, Attribute, AttributeValue, ProductAttribute, ProductOption, Variation (SKU), AddOn, AddOnGroup, Bundle, BundleItem, CustomizationField, ConditionalRule, ProductRelation (cross/up/related), Review |
 | Pricing | MarketPrice (product/variation × market × currency), SalePrice schedule, TaxRule |

@@ -2,6 +2,12 @@
 
 Records important project changes. Newest first.
 
+## 2026-11-28 — Phase 5 step 5.6: delivery fee, tax and signed quote
+
+- Migration `market_tax`: `market.tax_rate_bps` and `market.tax_inclusive`; the market create and update API accepts `taxRateBps` and `taxInclusive`.
+- Quotes now include the delivery fee (zone charge, minimum order, free-over, free-delivery promotion), per-line and delivery tax, `delivery` and `tax` blocks. The cart view adds `quote.delivery`, `quote.tax`, `quote.expiresAt` and an HMAC `quote.signature`.
+- New env `QUOTE_SIGNING_SECRET` (min 32 characters; required in staging and production).
+
 ## 2026-11-28 — Phase 5 step 5.5: promotions and coupons
 
 - New promotion engine and evaluator; quotes now include discounts, free gifts and a free-delivery flag. Staff API for promotions and coupons under `/api/v1/admin/brands/:brandId/promotions`; shoppers apply and remove a coupon with `PUT` and `DELETE /api/v1/cart/coupon`.

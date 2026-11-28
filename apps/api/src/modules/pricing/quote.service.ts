@@ -4,6 +4,8 @@ import { ApiException } from '../../common/errors/api-exception';
 import type { AppliedPromotion } from '../promotions/promotion-engine';
 import { type CouponState, PromotionEvaluator } from '../promotions/promotion-evaluator.service';
 import type { Tx } from '../admin/brand-access';
+import { type DeliveryQuote, priceDelivery } from './delivery-fee';
+import { computeTax } from './tax';
 import {
   type AddonGroupDef,
   type BundleItemDef,
@@ -29,6 +31,8 @@ export interface QuoteContext {
   couponCode?: string | null;
   /** Price without promotions (used to validate one line, and to price gifts). */
   skipPromotions?: boolean;
+  /** The shopper's delivery choice; without both, no fee is quoted yet. */
+  delivery?: { areaId: string | null; methodId: string | null } | null;
 }
 
 export interface Quote {
@@ -37,10 +41,14 @@ export interface Quote {
   at: Date;
   lines: QuoteLine[];
   totals: QuoteTotals;
+  /** Null until an area and a method are chosen. */
+  delivery: DeliveryQuote | null;
+  /** The market's tax rule the totals were built with. */
+  tax: { rateBps: number; inclusive: boolean };
   promotions: {
     applied: AppliedPromotion[];
     coupon: CouponState | null;
-    /** The delivery fee is waived (step 5.6 reads this). */
+    /** A free-delivery promotion applies (it waives the delivery fee). */
     freeDelivery: boolean;
   };
 }
@@ -135,25 +143,80 @@ export class QuoteService {
       };
     }
 
+    const goodsMinor = priced.subtotalMinor - discountMinor;
+    const delivery = await this.deliveryFor(tx, ctx, goodsMinor, promotions.freeDelivery);
+    const feeMinor = delivery?.feeMinor ?? 0;
+    const market = await tx.market.findUnique({
+      where: { id: ctx.marketId },
+      select: { taxRateBps: true, taxInclusive: true },
+    });
+    // A market the scope cannot see prices nothing anyway, so the fallback is never shown.
+    const tax = { rateBps: market?.taxRateBps ?? 0, inclusive: market?.taxInclusive ?? true };
+    const breakdown = computeTax(
+      tax,
+      quoteLines.map((l) => l.totalMinor),
+      feeMinor,
+    );
+
     return {
       errors: priced.errors,
       quote: {
         marketId: ctx.marketId,
         currency: ctx.currency,
         at: ctx.at,
-        lines: quoteLines,
-        // Delivery fee and tax join the totals in step 5.6.
+        lines: quoteLines.map((l, i) => ({ ...l, taxMinor: breakdown.lineTaxMinor[i] ?? 0 })),
         totals: composeTotals({
           currency: ctx.currency,
           subtotalMinor: priced.subtotalMinor,
           discountMinor,
-          deliveryFeeMinor: 0,
-          taxMinor: 0,
-          taxInclusive: true,
+          deliveryFeeMinor: feeMinor,
+          taxMinor: breakdown.taxMinor,
+          taxInclusive: tax.inclusive,
         }),
+        delivery,
+        tax,
         promotions,
       },
     };
+  }
+
+  /**
+   * The fee for the chosen area and method. The area comes from the shopper but is only ever
+   * looked up inside this brand and market: its zone is the active one that contains it, and the
+   * fee is that zone's charge for the method in the cart's currency.
+   */
+  private async deliveryFor(
+    tx: Tx,
+    ctx: QuoteContext,
+    goodsMinor: number,
+    freeDelivery: boolean,
+  ): Promise<DeliveryQuote | null> {
+    const areaId = ctx.delivery?.areaId;
+    const methodId = ctx.delivery?.methodId;
+    if (!areaId || !methodId) return null;
+    const link = await tx.deliveryZoneArea.findFirst({
+      where: { marketId: ctx.marketId, areaId, zone: { status: 'ACTIVE' } },
+      select: { zoneId: true },
+    });
+    const charge = link
+      ? await tx.zoneCharge.findFirst({
+          where: {
+            zoneId: link.zoneId,
+            methodId,
+            currencyCode: ctx.currency,
+            method: { status: 'ACTIVE' },
+          },
+          select: { feeMinor: true, minimumOrderMinor: true, freeOverMinor: true },
+        })
+      : null;
+    return priceDelivery({
+      areaId,
+      methodId,
+      zoneId: link?.zoneId ?? null,
+      charge,
+      goodsMinor,
+      freeDelivery,
+    });
   }
 
   /** A free gift as a zero-price line, or null when the product cannot be sold as it is right now. */
@@ -163,16 +226,20 @@ export class QuoteService {
     productId: string,
     variationId: string | null,
   ): Promise<QuoteLine | null> {
-    const { quote, errors } = await this.quote(tx, { ...ctx, skipPromotions: true }, [
-      {
-        productId,
-        variationId: variationId ?? undefined,
-        quantity: 1,
-        options: [],
-        addOns: [],
-        bundleChoices: [],
-      },
-    ]);
+    const { quote, errors } = await this.quote(
+      tx,
+      { ...ctx, skipPromotions: true, delivery: null },
+      [
+        {
+          productId,
+          variationId: variationId ?? undefined,
+          quantity: 1,
+          options: [],
+          addOns: [],
+          bundleChoices: [],
+        },
+      ],
+    );
     const line = quote.lines.find((l) => l.kind === 'PRODUCT');
     if (errors.length > 0 || !line) return null;
     return {

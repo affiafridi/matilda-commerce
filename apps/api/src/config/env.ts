@@ -55,6 +55,9 @@ export const envSchema = z
     // Optional server-side pepper mixed into every password hash (Argon2 `secret`). Changing it
     // invalidates all existing passwords, so set it once before the first real account exists.
     PASSWORD_PEPPER: z.string().min(32).optional(),
+    // Key that signs shopper quotes (HMAC, D5-01). A signature is a convenience only: orders recompute.
+    // Without it a random key is generated per process, so quotes expire on restart.
+    QUOTE_SIGNING_SECRET: z.string().min(32).optional(),
     // Public base URL of the admin app, used in invite and reset links.
     ADMIN_BASE_URL: z.url().default('http://localhost:3001'),
     // Media storage adapter (D3-09). Local disk for development; the Cloudflare R2 adapter is added
@@ -72,6 +75,7 @@ export const envSchema = z
         'APP_ENCRYPTION_ACTIVE_KEY',
         'TRUSTED_PROXY_SECRET',
         'PASSWORD_PEPPER',
+        'QUOTE_SIGNING_SECRET',
       ] as const) {
         if (env[key] === undefined) {
           ctx.addIssue({

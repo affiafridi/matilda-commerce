@@ -1,6 +1,6 @@
 # Phase 5 Plan: E-commerce and Checkout
 
-**Status: APPROVED by the owner on 2026-11-27 ("Approve, start 5.1"); steps 5.1 to 5.5 are done; step 5.6 (delivery fee, tax and signed quote) is next.** Phase 4 was approved by the owner on 2026-11-27 ("Approve Phase 4, start Phase 5"). Because this phase handles money, work starts at step 5.1 only after you approve this plan and its decisions (D5-01 to D5-18), and step 5.2 stops for your review of the schema.
+**Status: APPROVED by the owner on 2026-11-27 ("Approve, start 5.1"); steps 5.1 to 5.6 are done; step 5.7 (checkout) is next.** Phase 4 was approved by the owner on 2026-11-27 ("Approve Phase 4, start Phase 5"). Because this phase handles money, work starts at step 5.1 only after you approve this plan and its decisions (D5-01 to D5-18), and step 5.2 stops for your review of the schema.
 
 Labels: **[Approved]** is from the owner's master prompt; **[Proposed]** needs review; **[Open]** is unresolved.
 
@@ -64,7 +64,7 @@ Payment settings per brand and market (provider, enabled methods, masked credent
 | 5.3 | Pricing engine (quote) over market prices, variations, options, add-ons and bundles | **Done**: pure engine `pricing/pricing-engine.ts` plus `QuoteService` (22 unit and 18 database tests); discounts, delivery fee and tax join in 5.5 and 5.6 |
 | 5.4 | Cart API for guests and customers, merge after sign-in, validation | **Done**: `/api/v1/cart` (read, add, change, remove, contact), guest cookie, merge at sign-in (28 database tests) |
 | 5.5 | Promotion and coupon engine with admin API | **Done**: pure engine, evaluator, staff API under `/admin/brands/:brandId/promotions`, coupon routes on the cart (19 unit and 37 database tests) |
-| 5.6 | Delivery fee and tax in the quote, signed quote | |
+| 5.6 | Delivery fee and tax in the quote, signed quote | **Done**: zone charge fee with minimum order and free-over rules, per-market tax (migration `market_tax`), HMAC-signed 15-minute quote on the cart view (12 unit and 8 database tests) |
 | 5.7 | Checkout: contact, addresses, recipient, gift message, delivery date and slot, holds | |
 | 5.8 | Order creation: idempotent, snapshots, order number, state machine, assignment | |
 | 5.9 | Payment framework, encrypted per-brand and market config, cash on delivery and manual payments | |

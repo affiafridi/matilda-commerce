@@ -101,6 +101,10 @@ model Market {
   code                          String
   status                        MarketStatus           @default(DRAFT)
   timezone                      String
+  /// Sales tax as basis points (500 = 5 percent); zero until finance confirms the rate (D5-03).
+  taxRateBps                    Int                    @default(0) @map("tax_rate_bps")
+  /// True when shelf prices already contain the tax, false when it is added on top.
+  taxInclusive                  Boolean                @default(true) @map("tax_inclusive")
   createdAt                     DateTime               @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt                     DateTime               @updatedAt @map("updated_at") @db.Timestamptz()
   brand                         Brand                  @relation(fields: [brandId], references: [id], onDelete: Restrict)

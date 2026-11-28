@@ -614,4 +614,166 @@ describe('QuoteService (database)', () => {
     expect(quote.lines).toEqual([]);
     expect(quote.totals.totalMinor).toBe(0);
   });
+
+  describe('delivery fee and tax (step 5.6)', () => {
+    const rose = (quantity = 1) => [line({ productId: c.rose, quantity })];
+    let areaId: string;
+    let zoneId: string;
+    let methodId: string;
+    let bareMethodId: string;
+    let chargeId: string;
+    const priced = (
+      quantity: number,
+      delivery: { areaId: string | null; methodId: string | null } | null,
+      over: Partial<{ brandId: string; marketId: string }> = {},
+    ) =>
+      inBrandA((tx) =>
+        service.price(
+          tx,
+          { ...ctxA, at: new Date('2026-11-30T12:00:00Z'), ...over, delivery },
+          rose(quantity),
+        ),
+      );
+    const asAdmin = <T>(fn: (tx: Tx) => Promise<T>) => withScope(admin, platform, fn);
+    const choice = () => ({ areaId, methodId });
+
+    beforeAll(async () => {
+      await asAdmin(async (tx) => {
+        const area = await tx.deliveryArea.create({
+          data: { countryId: ids.ae, level: 'EMIRATE', code: 'q56-dubai' },
+        });
+        areaId = area.id;
+        const zone = await tx.deliveryZone.create({
+          data: { brandId: ids.brandA, marketId: ids.marketA, code: 'q56-zone' },
+        });
+        zoneId = zone.id;
+        await tx.deliveryZoneArea.create({
+          data: { zoneId, brandId: ids.brandA, marketId: ids.marketA, areaId },
+        });
+        const method = await tx.deliveryMethod.create({
+          data: { brandId: ids.brandA, marketId: ids.marketA, kind: 'SCHEDULED', code: 'q56-std' },
+        });
+        methodId = method.id;
+        const bare = await tx.deliveryMethod.create({
+          data: { brandId: ids.brandA, marketId: ids.marketA, kind: 'SAME_DAY', code: 'q56-bare' },
+        });
+        bareMethodId = bare.id;
+        const charge = await tx.zoneCharge.create({
+          data: {
+            brandId: ids.brandA,
+            marketId: ids.marketA,
+            zoneId,
+            methodId,
+            currencyCode: 'AED',
+            feeMinor: 3000,
+            freeOverMinor: 40000,
+          },
+        });
+        chargeId = charge.id;
+      });
+    });
+
+    afterEach(async () => {
+      await asAdmin(async (tx) => {
+        await tx.market.update({
+          where: { id: ids.marketA },
+          data: { taxRateBps: 0, taxInclusive: true },
+        });
+        await tx.deliveryZone.update({ where: { id: zoneId }, data: { status: 'ACTIVE' } });
+        await tx.zoneCharge.update({ where: { id: chargeId }, data: { minimumOrderMinor: 0 } });
+      });
+    });
+
+    it('quotes no delivery until an area and a method are both chosen', async () => {
+      for (const d of [null, { areaId, methodId: null }, { areaId: null, methodId }]) {
+        const q = await priced(1, d);
+        expect(q.delivery).toBeNull();
+        expect(q.totals.deliveryFeeMinor).toBe(0);
+        expect(q.totals.totalMinor).toBe(25000);
+      }
+    });
+
+    it("adds the zone's fee, and waives it over the free threshold on goods", async () => {
+      const one = await priced(1, choice());
+      expect(one.delivery).toMatchObject({ zoneId, feeMinor: 3000, waivedBy: null, problem: null });
+      expect(one.totals).toMatchObject({ deliveryFeeMinor: 3000, totalMinor: 28000 });
+      const two = await priced(2, choice());
+      expect(two.delivery).toMatchObject({
+        baseFeeMinor: 3000,
+        feeMinor: 0,
+        waivedBy: 'THRESHOLD',
+      });
+      expect(two.totals.totalMinor).toBe(50000);
+    });
+
+    it('reports a minimum order the basket does not reach', async () => {
+      await asAdmin((tx) =>
+        tx.zoneCharge.update({ where: { id: chargeId }, data: { minimumOrderMinor: 30000 } }),
+      );
+      const q = await priced(1, choice());
+      expect(q.delivery).toMatchObject({ problem: 'BELOW_MINIMUM', minimumOrderMinor: 30000 });
+      expect(q.totals.deliveryFeeMinor).toBe(3000);
+    });
+
+    it('is not serviceable for an unknown area, a method without a charge or a paused zone', async () => {
+      const unknown = await priced(1, { areaId: uuidv7(), methodId });
+      expect(unknown.delivery).toMatchObject({
+        problem: 'NOT_SERVICEABLE',
+        feeMinor: 0,
+        zoneId: null,
+      });
+      const bare = await priced(1, { areaId, methodId: bareMethodId });
+      expect(bare.delivery).toMatchObject({ problem: 'NOT_SERVICEABLE', feeMinor: 0 });
+      await asAdmin((tx) =>
+        tx.deliveryZone.update({ where: { id: zoneId }, data: { status: 'INACTIVE' } }),
+      );
+      const paused = await priced(1, choice());
+      expect(paused.delivery).toMatchObject({ problem: 'NOT_SERVICEABLE', zoneId: null });
+    });
+
+    it("never resolves another brand's or market's zone", async () => {
+      const q = await withScope(app, { brandIds: [ids.brandB] }, (tx) =>
+        service.price(
+          tx,
+          { brandId: ids.brandB, marketId: ids.marketB, currency: 'AED', at, delivery: choice() },
+          [],
+        ),
+      );
+      expect(q.delivery).toMatchObject({ problem: 'NOT_SERVICEABLE', zoneId: null });
+      const otherMarket = await inBrandA((tx) =>
+        service.price(tx, { ...ctxA, marketId: ids.marketA2, delivery: choice() }, []),
+      );
+      expect(otherMarket.delivery).toMatchObject({ problem: 'NOT_SERVICEABLE', zoneId: null });
+    });
+
+    it('finds the tax inside inclusive prices without changing the total', async () => {
+      await asAdmin((tx) =>
+        tx.market.update({
+          where: { id: ids.marketA },
+          data: { taxRateBps: 500, taxInclusive: true },
+        }),
+      );
+      const q = await priced(1, choice());
+      expect(q.tax).toEqual({ rateBps: 500, inclusive: true });
+      expect(q.lines[0]!.taxMinor).toBe(1190);
+      expect(q.totals).toMatchObject({ taxMinor: 1333, taxInclusive: true, totalMinor: 28000 });
+    });
+
+    it('adds tax on top of exclusive prices, on goods and delivery', async () => {
+      await asAdmin((tx) =>
+        tx.market.update({
+          where: { id: ids.marketA },
+          data: { taxRateBps: 500, taxInclusive: false },
+        }),
+      );
+      const q = await priced(1, choice());
+      expect(q.lines[0]!.taxMinor).toBe(1250);
+      expect(q.totals).toMatchObject({ taxMinor: 1400, taxInclusive: false, totalMinor: 29400 });
+    });
+
+    it('charges no tax while the market rate is zero', async () => {
+      const q = await priced(1, choice());
+      expect(q.totals.taxMinor).toBe(0);
+    });
+  });
 });
