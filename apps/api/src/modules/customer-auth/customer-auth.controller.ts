@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   Inject,
+  Logger,
   Patch,
   Post,
   Req,
@@ -19,6 +20,8 @@ import { APP_ENV, type Env } from '../../config/env';
 import { PublicRoute } from '../iam/authorization/decorators';
 import { TenantResolver } from '../tenancy/tenant-resolver.service';
 import { TenantGuard } from '../tenancy/tenant.guard';
+import { clearCartCookie, readCartToken } from '../carts/cart-cookie';
+import { CartService } from '../carts/carts.service';
 import { CustomerAuthService } from './customer-auth.service';
 import {
   type RequestWithTenant,
@@ -70,8 +73,10 @@ export class CustomerAuthController {
   constructor(
     private readonly auth: CustomerAuthService,
     private readonly resolver: TenantResolver,
+    private readonly carts: CartService,
     @Inject(APP_ENV) private readonly env: Env,
   ) {}
+  private readonly log = new Logger(CustomerAuthController.name);
 
   @Post('register')
   @HttpCode(202)
@@ -112,7 +117,26 @@ export class CustomerAuthController {
     await assertSameBrandOrigin(req, this.resolver);
     const issued = await this.auth.login(requireTenant(req), body.email, body.password);
     setCustomerCookie(res, this.env, issued);
+    await this.mergeGuestCart(req, res, issued.customerId);
     return { csrfToken: issued.csrfToken };
+  }
+
+  /** The guest cart joins the customer's cart at sign-in (D5-02); a failure never blocks the login. */
+  private async mergeGuestCart(
+    req: RequestWithTenant,
+    res: Response,
+    customerId: string,
+  ): Promise<void> {
+    const token = readCartToken(req, this.env);
+    if (!token) return;
+    try {
+      await this.carts.mergeGuestCart(requireTenant(req).brand.id, customerId, token);
+      clearCartCookie(res, this.env);
+    } catch (err) {
+      this.log.error(
+        `Guest cart merge failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   @Post('forgot-password')

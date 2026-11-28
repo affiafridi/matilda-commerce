@@ -13,6 +13,14 @@ describe('permission catalog', () => {
     for (const k of keys) expect(k).toMatch(/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/);
   });
 
+  it('has the Phase 5 commerce keys, with payment gateway changes sensitive', () => {
+    for (const k of ['orders.view', 'promotions.view', 'promotions.manage', 'payments.view']) {
+      expect(isCatalogPermission(k)).toBe(true);
+    }
+    expect(isSensitivePermission('payments.view')).toBe(false);
+    expect(isSensitivePermission('settings.manage_payments')).toBe(true);
+  });
+
   it('flags the sensitive keys named in the plan', () => {
     for (const k of [
       'refunds.approve',

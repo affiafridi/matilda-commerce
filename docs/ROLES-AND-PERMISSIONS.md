@@ -43,6 +43,7 @@ orders.view    orders.create    orders.edit    orders.cancel
 refunds.create refunds.approve
 seo.view seo.edit seo.publish
 finance.view finance.export
+payments.view (added in Phase 5 step 5.1: payment attempts and masked gateway settings, read-only)
 settings.manage_payments
 users.manage roles.manage
 ```

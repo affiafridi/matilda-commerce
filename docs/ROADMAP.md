@@ -8,8 +8,8 @@ All application development phases are **pending**. Do not proceed from one phas
 | 1 | Project Foundation | **Complete** (2026-11-25; awaiting owner approval to start Phase 2; DB connectivity unverified) |
 | 2 | Multi-Store and Access Foundation | **Complete and approved by the owner** (2026-11-25); Phase 3 not started and needs explicit approval |
 | 3 | Product and Catalog Engine | **Complete and approved by the owner** (2026-11-26; [PHASE-3-PLAN.md](PHASE-3-PLAN.md), steps 3.1 to 3.12) |
-| 4 | Inventory and Delivery Foundation | **In progress** (plan approved 2026-11-26, [PHASE-4-PLAN.md](PHASE-4-PLAN.md); steps 4.1 to 4.13 are built; the owner has not yet tested them and reviews all of Phase 4 before Phase 5) |
-| 5 | E-commerce and Checkout | Pending |
+| 4 | Inventory and Delivery Foundation | **Complete and approved by the owner** (2026-11-27; [PHASE-4-PLAN.md](PHASE-4-PLAN.md), steps 4.1 to 4.13) |
+| 5 | E-commerce and Checkout | **In progress** (plan approved 2026-11-27, [PHASE-5-PLAN.md](PHASE-5-PLAN.md); steps 5.1 to 5.5 done, step 5.6 delivery fee, tax and signed quote is next) |
 | 6 | Order and Production Management | Pending |
 | 7 | CMS, SEO and Marketing | Pending |
 | 8 | Matilda Flower Storefront | Pending |

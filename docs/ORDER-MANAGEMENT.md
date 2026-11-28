@@ -19,7 +19,7 @@ Never allow arbitrary status changes. Each dimension is a state machine with per
 | Production | queued → assigned → in_preparation → ready → (quality_check); rework |
 | Fulfillment | unassigned → assigned → out_for_delivery → delivered; failed_delivery; returned; (pickup_ready → picked_up) |
 
-State names and transitions are **[Proposed]** and must be finalized in design review.
+State names and transitions are **[Proposed]** and must be finalized in design review. [Phase 5] The order, payment, fulfillment, payment-attempt and cart machines are implemented (shared contract `commerce.ts` and database triggers, kept identical by a test); the production dimension arrives in Phase 6.
 
 ## Snapshots [Approved]
 

@@ -148,6 +148,7 @@ export const ROLE_TEMPLATES: readonly RoleTemplate[] = [
       'orders.view',
       'finance.view',
       'finance.export',
+      'payments.view',
       'refunds.create',
       'refunds.approve',
       'reports.view',

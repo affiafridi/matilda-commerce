@@ -20,6 +20,7 @@ export interface CustomerSessionInfo {
 }
 
 export interface IssuedCustomerSession {
+  customerId: string;
   token: string;
   csrfToken: string;
   maxAgeMs: number;
@@ -60,7 +61,7 @@ export class CustomerSessionService {
         userAgent: meta.userAgent,
       },
     });
-    return { token, csrfToken, maxAgeMs: CUSTOMER_SESSION_POLICY.absoluteMs };
+    return { customerId, token, csrfToken, maxAgeMs: CUSTOMER_SESSION_POLICY.absoluteMs };
   }
 
   /** A live session of an ACTIVE customer of exactly this brand, or null. */

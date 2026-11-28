@@ -75,6 +75,7 @@ export const PERMISSION_DEFS = [
   // Finance
   def('finance', 'view', 'View payments and financial reports'),
   def('finance', 'export', 'Export financial data', true),
+  def('payments', 'view', 'View payment attempts and masked gateway settings'),
   // Marketing and content
   def('promotions', 'view', 'View promotions'),
   def('promotions', 'manage', 'Manage promotions and coupons'),

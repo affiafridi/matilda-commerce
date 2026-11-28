@@ -6,6 +6,8 @@ NestJS REST API, versioned, documented with Swagger/OpenAPI. Only the API access
 
 ```text
 /api/v1/storefront/     public catalog, cart, checkout, content (brand-resolved by domain)
+/api/v1/cart            guest and customer cart (Phase 5 step 5.4): GET, POST lines, PATCH/DELETE lines/:id, PATCH contact, PUT/DELETE coupon
+/api/v1/admin/brands/:brandId/promotions   promotions and coupons (Phase 5 step 5.5)
 /api/v1/admin/          staff operations (brand/market/branch scoped)
 /api/v1/customer/       authenticated customer account
 /api/v1/production/     production staff views

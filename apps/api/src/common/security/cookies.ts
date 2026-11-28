@@ -1,4 +1,4 @@
-export type CookieRealm = 'staff' | 'customer';
+export type CookieRealm = 'staff' | 'customer' | 'cart';
 
 export interface SessionCookieOptions {
   httpOnly: true;

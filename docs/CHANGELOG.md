@@ -2,6 +2,42 @@
 
 Records important project changes. Newest first.
 
+## 2026-11-28 — Phase 5 step 5.5: promotions and coupons
+
+- New promotion engine and evaluator; quotes now include discounts, free gifts and a free-delivery flag. Staff API for promotions and coupons under `/api/v1/admin/brands/:brandId/promotions`; shoppers apply and remove a coupon with `PUT` and `DELETE /api/v1/cart/coupon`.
+- Cart view gains `quote.promotions` (applied offers, coupon outcome, free delivery). `QuoteService` takes the customer and coupon code and applies promotions unless `skipPromotions` is set.
+
+## 2026-11-28 — Phase 5 step 5.4: cart API
+
+- New routes under `/api/v1/cart` (read, add, change, remove, capture contact) for guests (secret cookie, hash stored) and signed-in customers (one open cart per brand), with same-brand origin and customer CSRF checks. Every read re-prices through the pricing engine; unbuyable lines stay visible with issues. Guest cart merges into the customer cart at sign-in.
+- `QuoteService.quote` prices what it can and lists the rest; the engine no longer zeroes the whole cart when one line fails (`price` still throws for checkout). Customer sessions now return the customer id. New request contracts `addCartLineSchema`, `updateCartLineSchema`, `cartContactSchema`.
+
+## 2026-11-28 — Phase 5 step 5.3: pricing engine
+
+- New `pricing` module: pure `priceCart` engine plus `QuoteService` that loads catalog data under row-level security and returns snapshot-ready quote lines and totals, or 422 `CART_INVALID` with per-line errors. Covers sale windows, variations, option and add-on deltas, conditional option rules, bundles and quantity limits. No routes yet; the cart (5.4) and checkout (5.7) call it.
+- Shared contract change: `bundleChoices` entries are `{ bundleItemId, variationId? }`; `quoteLineSchema` gained `cartLineId`, `addonItemId`, `name`, `sku`, `options` and `bundleItems`. 22 unit and 18 database tests.
+
+## 2026-11-27 — Phase 5 step 5.2: commerce schema implemented
+
+- Owner approved the schema draft as recommended. Migration `commerce` adds 21 brand-keyed tables (carts, orders, payments, promotions, saved addresses) with row-level security, state machines, frozen order snapshots, append-only history, encrypted versioned payment config and atomic coupon use and order numbers.
+- `bundle_item` gained `UNIQUE (id, brand_id)`. New `commerce-schema.int-spec.ts` (101 tests). No API yet.
+
+## 2026-11-27 — Phase 5 step 5.2: schema draft for review
+
+- New [PHASE-5-SCHEMA-DRAFT.md](PHASE-5-SCHEMA-DRAFT.md): 22 tables, enums matching the shared contracts, row-level security, immutable order snapshots, payment config versioning and seven owner questions. Docs only; no migration yet.
+
+## 2026-11-27 — Phase 5 step 5.1: commerce foundations
+
+- Plan approved by the owner ("Approve, start 5.1").
+- New permission `payments.view`; Finance Manager template gets it.
+- New shared contracts and state machines in `packages/validation/src/commerce.ts` with tests; money helpers use whole minor units only.
+- Skeleton modules for carts, promotions, checkout, orders and payments (no routes); test-only cart fixtures.
+
+## 2026-11-27 — Phase 4 approved; Phase 5 plan drafted
+
+- The owner approved Phase 4 after reviewing the screens ("Approve Phase 4, start Phase 5").
+- New [PHASE-5-PLAN.md](PHASE-5-PLAN.md): scope, domain model, steps 5.1 to 5.13, decisions D5-01 to D5-18, owner inputs needed (CCAvenue test credentials, tax, cash on delivery, promotions) and risks. No Phase 5 code yet; step 5.1 waits for the owner to approve the plan.
+
 ## 2026-11-27 — Admin screens: usability pass after the owner's first look
 
 - The owner found the Phase 4 screens hard to understand and unaligned. Fixes: a new "Delivery setup" checklist page (what to do first, what is still missing); opening hours as day switches with time pickers; date and time pickers instead of typed text; side-by-side fields now line up; sections are boxed with a plain-language description; plainer names (Methods and fees, Branch assignment, "preferences" instead of "rules").

@@ -35,6 +35,7 @@ model Currency {
   symbol          String
   minorUnitDigits Int              @map("minor_unit_digits") @db.SmallInt
   markets         MarketCurrency[]
+  promotions      Promotion[]      @relation("c5_promotion_currency")
 
   @@map("currency")
 }
@@ -87,6 +88,7 @@ model Brand {
   DeliveryClosureBrandRel     DeliveryClosure[]     @relation("delivery_closure_19")
   inventorySetting            InventorySetting?     @relation("inventory_setting_33")
   StockTransferBrandRel       StockTransfer[]       @relation("stock_transfer_45")
+  orderCounter                OrderCounter?         @relation("c5_order_counter_brand")
 
   @@map("brand")
 }
@@ -119,6 +121,10 @@ model Market {
   DeliveryRestrictionMarketRel  DeliveryRestriction[]  @relation("delivery_restriction_26")
   BranchAssignmentRuleMarketRel BranchAssignmentRule[] @relation("branch_assignment_rule_32")
   StockReservationMarketRel     StockReservation[]     @relation("stock_reservation_40")
+  carts                         Cart[]                 @relation("c5_cart_market")
+  orders                        CustomerOrder[]        @relation("c5_order_market")
+  paymentConfigs                PaymentConfig[]        @relation("c5_payment_config_market")
+  promotionLinks                PromotionMarket[]      @relation("c5_promotion_market_market")
 
   @@unique([brandId, countryId])
   @@unique([brandId, code])
@@ -137,6 +143,8 @@ model MarketCurrency {
   OptionPriceMarketRel1       OptionPrice[]    @relation("option_price_1")
   AddonItemPriceMarketRel2    AddonItemPrice[] @relation("addon_item_price_2")
   ZoneChargeMarketCurrencyRel ZoneCharge[]     @relation("zone_charge_16")
+  carts                       Cart[]           @relation("c5_cart_currency")
+  orders                      CustomerOrder[]  @relation("c5_order_currency")
 
   @@id([marketId, currencyCode])
   @@map("market_currency")
@@ -486,6 +494,9 @@ model Customer {
   brand                  Brand             @relation(fields: [brandId], references: [id], onDelete: Restrict)
   sessions               CustomerSession[]
   tokens                 CustomerToken[]
+  carts                  Cart[]            @relation("c5_cart_customer")
+  orders                 CustomerOrder[]   @relation("c5_order_customer")
+  addresses              CustomerAddress[] @relation("c5_address_customer")
 
   @@unique([brandId, email])
   @@unique([id, brandId])
@@ -628,6 +639,9 @@ model Product {
   DeliveryRestrictionProductRel     DeliveryRestriction[] @relation("delivery_restriction_27")
   StockLevelProductRel              StockLevel[]          @relation("stock_level_35")
   StockTransferLineProductRel       StockTransferLine[]   @relation("stock_transfer_line_49")
+  cartLines                         CartLine[]            @relation("c5_cart_line_product")
+  promotionGifts                    Promotion[]           @relation("c5_promotion_gift_product")
+  promotionTargets                  PromotionTarget[]     @relation("c5_promotion_target_product")
 
   @@unique([id, brandId])
   @@unique([brandId, sku])
@@ -775,6 +789,7 @@ model Category {
   mediaAsset                     MediaAsset?           @relation("category_2", fields: [mediaAssetId, brandId], references: [id, brandId], onDelete: Restrict)
   translations                   CategoryTranslation[] @relation("category_translation_0")
   DeliveryRestrictionCategoryRel DeliveryRestriction[] @relation("delivery_restriction_28")
+  promotionTargets               PromotionTarget[]     @relation("c5_promotion_target_category")
 
   @@unique([id, brandId])
   @@index([brandId, parentId, sortOrder])
@@ -812,6 +827,7 @@ model Collection {
   brand                            Brand                   @relation("collection_0", fields: [brandId], references: [id], onDelete: Restrict)
   translations                     CollectionTranslation[] @relation("collection_translation_0")
   DeliveryRestrictionCollectionRel DeliveryRestriction[]   @relation("delivery_restriction_29")
+  promotionTargets                 PromotionTarget[]       @relation("c5_promotion_target_collection")
 
   @@unique([id, brandId])
   @@index([brandId, status, sortOrder])
@@ -966,29 +982,32 @@ model ProductAttributeValue {
 }
 
 model Variation {
-  id                               String              @id @default(uuid(7)) @db.Uuid
-  brandId                          String              @map("brand_id") @db.Uuid
-  productId                        String              @map("product_id") @db.Uuid
+  id                               String                 @id @default(uuid(7)) @db.Uuid
+  brandId                          String                 @map("brand_id") @db.Uuid
+  productId                        String                 @map("product_id") @db.Uuid
   sku                              String
-  combinationKey                   String              @map("combination_key")
-  active                           Boolean             @default(true)
-  sortOrder                        Int                 @default(0) @map("sort_order")
-  mediaAssetId                     String?             @map("media_asset_id") @db.Uuid
-  createdAt                        DateTime            @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt                        DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
-  deletedAt                        DateTime?           @map("deleted_at") @db.Timestamptz()
-  product                          Product             @relation("variation_0", fields: [productId, brandId], references: [id, brandId], onDelete: Restrict)
-  mediaAsset                       MediaAsset?         @relation("variation_1", fields: [mediaAssetId, brandId], references: [id, brandId], onDelete: Restrict)
-  VariationValueVariationRel0      VariationValue[]    @relation("variation_value_0")
-  VariationValueVariationRel1      VariationValue[]    @relation("variation_value_1")
-  MarketPriceVariationRel3         MarketPrice[]       @relation("market_price_3")
-  AddonItemAddonVariationRel2      AddonItem[]         @relation("addon_item_2")
-  AddonItemAddonVariationRel3      AddonItem[]         @relation("addon_item_3")
-  BundleItemComponentVariationRel2 BundleItem[]        @relation("bundle_item_2")
-  BundleItemComponentVariationRel3 BundleItem[]        @relation("bundle_item_3")
-  StockLevelVariationRel           StockLevel[]        @relation("stock_level_36")
-  StockLevelVariationProductRel    StockLevel[]        @relation("stock_level_37")
-  StockTransferLineVariationRel    StockTransferLine[] @relation("stock_transfer_line_50")
+  combinationKey                   String                 @map("combination_key")
+  active                           Boolean                @default(true)
+  sortOrder                        Int                    @default(0) @map("sort_order")
+  mediaAssetId                     String?                @map("media_asset_id") @db.Uuid
+  createdAt                        DateTime               @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                        DateTime               @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt                        DateTime?              @map("deleted_at") @db.Timestamptz()
+  product                          Product                @relation("variation_0", fields: [productId, brandId], references: [id, brandId], onDelete: Restrict)
+  mediaAsset                       MediaAsset?            @relation("variation_1", fields: [mediaAssetId, brandId], references: [id, brandId], onDelete: Restrict)
+  VariationValueVariationRel0      VariationValue[]       @relation("variation_value_0")
+  VariationValueVariationRel1      VariationValue[]       @relation("variation_value_1")
+  MarketPriceVariationRel3         MarketPrice[]          @relation("market_price_3")
+  AddonItemAddonVariationRel2      AddonItem[]            @relation("addon_item_2")
+  AddonItemAddonVariationRel3      AddonItem[]            @relation("addon_item_3")
+  BundleItemComponentVariationRel2 BundleItem[]           @relation("bundle_item_2")
+  BundleItemComponentVariationRel3 BundleItem[]           @relation("bundle_item_3")
+  StockLevelVariationRel           StockLevel[]           @relation("stock_level_36")
+  StockLevelVariationProductRel    StockLevel[]           @relation("stock_level_37")
+  StockTransferLineVariationRel    StockTransferLine[]    @relation("stock_transfer_line_50")
+  cartLines                        CartLine[]             @relation("c5_cart_line_variation")
+  cartBundleChoices                CartLineBundleChoice[] @relation("c5_cart_line_bundle_variation")
+  promotionGifts                   Promotion[]            @relation("c5_promotion_gift_variation")
 
   @@unique([id, brandId])
   @@unique([brandId, sku])
@@ -1059,6 +1078,7 @@ model OptionGroup {
   OptionRuleDependsOnGroupRel2 OptionRule[]             @relation("option_rule_2")
   translations                 OptionGroupTranslation[] @relation("option_group_translation_0")
   OptionPriceOptionGroupRel2   OptionPrice[]            @relation("option_price_2")
+  cartOptions                  CartLineOption[]         @relation("c5_cart_line_option_group")
 
   @@unique([id, brandId])
   @@unique([productId, key])
@@ -1077,6 +1097,7 @@ model OptionChoice {
   OptionRuleDependsOnChoiceRel3 OptionRule[]              @relation("option_rule_3")
   translations                  OptionChoiceTranslation[] @relation("option_choice_translation_0")
   OptionPriceOptionChoiceRel3   OptionPrice[]             @relation("option_price_3")
+  cartOptions                   CartLineOption[]          @relation("c5_cart_line_option_choice")
 
   @@unique([id, brandId])
   @@unique([optionGroupId, key])
@@ -1190,6 +1211,7 @@ model AddonItem {
   addonVariationByAddonProduct Variation?             @relation("addon_item_3", fields: [addonVariationId, addonProductId], references: [id, productId], onDelete: Restrict)
   translations                 AddonItemTranslation[] @relation("addon_item_translation_0")
   prices                       AddonItemPrice[]       @relation("addon_item_price_0")
+  cartLines                    CartLineAddon[]        @relation("c5_cart_line_addon_item")
 
   @@unique([id, brandId])
   @@index([addonGroupId])
@@ -1244,18 +1266,20 @@ model AddonItemPrice {
 }
 
 model BundleItem {
-  id                                   String     @id @default(uuid(7)) @db.Uuid
-  brandId                              String     @map("brand_id") @db.Uuid
-  bundleProductId                      String     @map("bundle_product_id") @db.Uuid
-  componentProductId                   String     @map("component_product_id") @db.Uuid
-  componentVariationId                 String?    @map("component_variation_id") @db.Uuid
-  quantity                             Int        @default(1)
-  sortOrder                            Int        @default(0) @map("sort_order")
-  bundleProduct                        Product    @relation("bundle_item_0", fields: [bundleProductId, brandId], references: [id, brandId], onDelete: Cascade)
-  componentProduct                     Product    @relation("bundle_item_1", fields: [componentProductId, brandId], references: [id, brandId], onDelete: Restrict)
-  componentVariation                   Variation? @relation("bundle_item_2", fields: [componentVariationId, brandId], references: [id, brandId], onDelete: Restrict)
-  componentVariationByComponentProduct Variation? @relation("bundle_item_3", fields: [componentVariationId, componentProductId], references: [id, productId], onDelete: Restrict)
+  id                                   String                 @id @default(uuid(7)) @db.Uuid
+  brandId                              String                 @map("brand_id") @db.Uuid
+  bundleProductId                      String                 @map("bundle_product_id") @db.Uuid
+  componentProductId                   String                 @map("component_product_id") @db.Uuid
+  componentVariationId                 String?                @map("component_variation_id") @db.Uuid
+  quantity                             Int                    @default(1)
+  sortOrder                            Int                    @default(0) @map("sort_order")
+  bundleProduct                        Product                @relation("bundle_item_0", fields: [bundleProductId, brandId], references: [id, brandId], onDelete: Cascade)
+  componentProduct                     Product                @relation("bundle_item_1", fields: [componentProductId, brandId], references: [id, brandId], onDelete: Restrict)
+  componentVariation                   Variation?             @relation("bundle_item_2", fields: [componentVariationId, brandId], references: [id, brandId], onDelete: Restrict)
+  componentVariationByComponentProduct Variation?             @relation("bundle_item_3", fields: [componentVariationId, componentProductId], references: [id, productId], onDelete: Restrict)
+  cartChoices                          CartLineBundleChoice[] @relation("c5_cart_line_bundle_item")
 
+  @@unique([id, brandId])
   @@index([bundleProductId])
   @@index([componentProductId])
   @@index([componentVariationId, componentProductId])
@@ -1421,6 +1445,7 @@ model DeliveryArea {
   translations DeliveryAreaTranslation[] @relation("delivery_area_translation_2")
   zoneLinks    DeliveryZoneArea[]        @relation("delivery_zone_area_7")
   restrictions DeliveryRestriction[]     @relation("delivery_restriction_30")
+  addresses    CustomerAddress[]         @relation("c5_address_area")
 
   @@unique([countryId, code])
   @@unique([id, countryId])
@@ -1842,4 +1867,576 @@ model StockTransferLine {
   @@index([productId, brandId])
   @@index([variationId, brandId])
   @@map("stock_transfer_line")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Phase 5 (step 5.2, docs/PHASE-5-SCHEMA-DRAFT.md): carts, orders, payments, promotions.
+// Check constraints, partial indexes, triggers and row-level security are hand-written SQL in
+// the migration `commerce`.
+// ---------------------------------------------------------------------------------------------
+
+enum CartStatus {
+  OPEN
+  CONVERTED
+  ABANDONED
+  MERGED
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING_PAYMENT
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  COD_PENDING
+  PARTIALLY_PAID
+  PAID
+  FAILED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum FulfillmentStatus {
+  UNASSIGNED
+  ASSIGNED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED_DELIVERY
+  RETURNED
+  PICKUP_READY
+  PICKED_UP
+}
+
+enum PaymentAttemptStatus {
+  INITIATED
+  REDIRECTED
+  SUCCEEDED
+  FAILED
+  EXPIRED
+}
+
+enum PaymentProvider {
+  CCAVENUE
+  COD
+  MANUAL
+}
+
+enum PromotionKind {
+  PERCENT_OFF
+  FIXED_OFF
+  FREE_DELIVERY
+  FREE_GIFT
+}
+
+enum PromotionScope {
+  ORDER
+  PRODUCT
+  CATEGORY
+  COLLECTION
+}
+
+enum PromotionAudience {
+  EVERYONE
+  CUSTOMERS
+  FIRST_ORDER
+}
+
+enum OrderLineKind {
+  PRODUCT
+  ADD_ON
+  GIFT
+}
+
+model Cart {
+  id               String         @id @default(uuid(7)) @db.Uuid
+  brandId          String         @map("brand_id") @db.Uuid
+  marketId         String         @map("market_id") @db.Uuid
+  currencyCode     String         @map("currency_code") @db.Char(3)
+  customerId       String?        @map("customer_id") @db.Uuid
+  /// SHA-256 of the secret cookie value; the value itself is never stored.
+  guestTokenHash   String?        @unique @map("guest_token_hash")
+  status           CartStatus     @default(OPEN)
+  /// Early delivery choices are hints; the order step validates everything again.
+  deliveryAreaId   String?        @map("delivery_area_id") @db.Uuid
+  deliveryDate     DateTime?      @map("delivery_date") @db.Date
+  deliveryMethodId String?        @map("delivery_method_id") @db.Uuid
+  slotId           String?        @map("slot_id") @db.Uuid
+  couponCode       String?        @map("coupon_code")
+  contactEmail     String?        @map("contact_email")
+  contactPhone     String?        @map("contact_phone")
+  lastActivityAt   DateTime       @default(now()) @map("last_activity_at") @db.Timestamptz()
+  abandonedAt      DateTime?      @map("abandoned_at") @db.Timestamptz()
+  convertedOrderId String?        @map("converted_order_id") @db.Uuid
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  market           Market         @relation("c5_cart_market", fields: [marketId, brandId], references: [id, brandId], onDelete: Restrict)
+  currency         MarketCurrency @relation("c5_cart_currency", fields: [marketId, currencyCode], references: [marketId, currencyCode], onDelete: Restrict)
+  customer         Customer?      @relation("c5_cart_customer", fields: [customerId, brandId], references: [id, brandId], onDelete: Restrict)
+  lines            CartLine[]     @relation("c5_cart_line_cart")
+
+  @@unique([id, brandId])
+  @@index([marketId, brandId])
+  @@index([marketId, currencyCode])
+  @@index([customerId, brandId])
+  @@index([status, lastActivityAt])
+  @@map("cart")
+}
+
+model CartLine {
+  id          String                 @id @default(uuid(7)) @db.Uuid
+  brandId     String                 @map("brand_id") @db.Uuid
+  cartId      String                 @map("cart_id") @db.Uuid
+  productId   String                 @map("product_id") @db.Uuid
+  variationId String?                @map("variation_id") @db.Uuid
+  quantity    Int
+  note        String?
+  createdAt   DateTime               @default(now()) @map("created_at") @db.Timestamptz()
+  cart        Cart                   @relation("c5_cart_line_cart", fields: [cartId, brandId], references: [id, brandId], onDelete: Cascade)
+  product     Product                @relation("c5_cart_line_product", fields: [productId, brandId], references: [id, brandId], onDelete: Restrict)
+  variation   Variation?             @relation("c5_cart_line_variation", fields: [variationId, brandId], references: [id, brandId], onDelete: Restrict)
+  options     CartLineOption[]       @relation("c5_cart_line_option_line")
+  addOns      CartLineAddon[]        @relation("c5_cart_line_addon_line")
+  bundles     CartLineBundleChoice[] @relation("c5_cart_line_bundle_line")
+
+  @@unique([id, brandId])
+  @@index([cartId, brandId])
+  @@index([productId, brandId])
+  @@index([variationId, brandId])
+  @@map("cart_line")
+}
+
+model CartLineOption {
+  id            String        @id @default(uuid(7)) @db.Uuid
+  brandId       String        @map("brand_id") @db.Uuid
+  lineId        String        @map("line_id") @db.Uuid
+  optionGroupId String        @map("option_group_id") @db.Uuid
+  choiceId      String?       @map("choice_id") @db.Uuid
+  text          String?
+  line          CartLine      @relation("c5_cart_line_option_line", fields: [lineId, brandId], references: [id, brandId], onDelete: Cascade)
+  optionGroup   OptionGroup   @relation("c5_cart_line_option_group", fields: [optionGroupId, brandId], references: [id, brandId], onDelete: Restrict)
+  choice        OptionChoice? @relation("c5_cart_line_option_choice", fields: [choiceId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@index([lineId, brandId])
+  @@index([optionGroupId, brandId])
+  @@index([choiceId, brandId])
+  @@map("cart_line_option")
+}
+
+model CartLineAddon {
+  lineId      String    @map("line_id") @db.Uuid
+  brandId     String    @map("brand_id") @db.Uuid
+  addonItemId String    @map("addon_item_id") @db.Uuid
+  quantity    Int
+  line        CartLine  @relation("c5_cart_line_addon_line", fields: [lineId, brandId], references: [id, brandId], onDelete: Cascade)
+  addonItem   AddonItem @relation("c5_cart_line_addon_item", fields: [addonItemId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@id([lineId, addonItemId])
+  @@index([lineId, brandId])
+  @@index([addonItemId, brandId])
+  @@map("cart_line_addon")
+}
+
+model CartLineBundleChoice {
+  lineId       String     @map("line_id") @db.Uuid
+  brandId      String     @map("brand_id") @db.Uuid
+  bundleItemId String     @map("bundle_item_id") @db.Uuid
+  variationId  String?    @map("variation_id") @db.Uuid
+  line         CartLine   @relation("c5_cart_line_bundle_line", fields: [lineId, brandId], references: [id, brandId], onDelete: Cascade)
+  bundleItem   BundleItem @relation("c5_cart_line_bundle_item", fields: [bundleItemId, brandId], references: [id, brandId], onDelete: Restrict)
+  variation    Variation? @relation("c5_cart_line_bundle_variation", fields: [variationId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@id([lineId, bundleItemId])
+  @@index([lineId, brandId])
+  @@index([bundleItemId, brandId])
+  @@index([variationId, brandId])
+  @@map("cart_line_bundle_choice")
+}
+
+model CustomerOrder {
+  id                   String               @id @default(uuid(7)) @db.Uuid
+  brandId              String               @map("brand_id") @db.Uuid
+  marketId             String               @map("market_id") @db.Uuid
+  number               String
+  status               OrderStatus          @default(DRAFT)
+  paymentStatus        PaymentStatus        @default(UNPAID) @map("payment_status")
+  fulfillmentStatus    FulfillmentStatus    @default(UNASSIGNED) @map("fulfillment_status")
+  customerId           String?              @map("customer_id") @db.Uuid
+  guestEmail           String?              @map("guest_email")
+  guestPhone           String?              @map("guest_phone")
+  currencyCode         String               @map("currency_code") @db.Char(3)
+  subtotalMinor        Int                  @map("subtotal_minor")
+  discountMinor        Int                  @map("discount_minor")
+  deliveryFeeMinor     Int                  @map("delivery_fee_minor")
+  taxMinor             Int                  @map("tax_minor")
+  totalMinor           Int                  @map("total_minor")
+  taxInclusive         Boolean              @map("tax_inclusive")
+  contactName          String               @map("contact_name")
+  contactEmail         String               @map("contact_email")
+  contactPhone         String               @map("contact_phone")
+  recipientName        String               @map("recipient_name")
+  recipientPhone       String               @map("recipient_phone")
+  deliveryAddress      Json                 @map("delivery_address")
+  billingAddress       Json?                @map("billing_address")
+  deliveryAreaId       String?              @map("delivery_area_id") @db.Uuid
+  zoneId               String?              @map("zone_id") @db.Uuid
+  deliveryMethodId     String?              @map("delivery_method_id") @db.Uuid
+  deliveryMethodKind   DeliveryMethodKind?  @map("delivery_method_kind")
+  deliveryDate         DateTime?            @map("delivery_date") @db.Date
+  slotId               String?              @map("slot_id") @db.Uuid
+  slotStart            DateTime?            @map("slot_start") @db.Time()
+  slotEnd              DateTime?            @map("slot_end") @db.Time()
+  branchId             String?              @map("branch_id") @db.Uuid
+  giftMessage          String?              @map("gift_message")
+  anonymousGift        Boolean              @default(false) @map("anonymous_gift")
+  instructions         String?
+  paymentConfigVersion Int?                 @map("payment_config_version")
+  paymentProvider      PaymentProvider?     @map("payment_provider")
+  paymentMethod        String?              @map("payment_method")
+  idempotencyKey       String               @map("idempotency_key")
+  couponCode           String?              @map("coupon_code")
+  placedAt             DateTime             @default(now()) @map("placed_at") @db.Timestamptz()
+  confirmedAt          DateTime?            @map("confirmed_at") @db.Timestamptz()
+  cancelledAt          DateTime?            @map("cancelled_at") @db.Timestamptz()
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+  market               Market               @relation("c5_order_market", fields: [marketId, brandId], references: [id, brandId], onDelete: Restrict)
+  currency             MarketCurrency       @relation("c5_order_currency", fields: [marketId, currencyCode], references: [marketId, currencyCode], onDelete: Restrict)
+  customer             Customer?            @relation("c5_order_customer", fields: [customerId, brandId], references: [id, brandId], onDelete: Restrict)
+  lines                OrderLine[]          @relation("c5_order_line_order")
+  promotions           OrderPromotion[]     @relation("c5_order_promotion_order")
+  history              OrderStatusHistory[] @relation("c5_order_history_order")
+  payment              Payment?             @relation("c5_payment_order")
+  usages               PromotionUsage[]     @relation("c5_usage_order")
+
+  @@unique([id, brandId])
+  @@unique([brandId, number])
+  @@unique([brandId, idempotencyKey])
+  @@index([marketId, brandId])
+  @@index([marketId, currencyCode])
+  @@index([customerId, brandId, createdAt])
+  @@index([brandId, status, createdAt])
+  @@index([branchId, deliveryDate])
+  @@map("customer_order")
+}
+
+model OrderLine {
+  id            String        @id @default(uuid(7)) @db.Uuid
+  brandId       String        @map("brand_id") @db.Uuid
+  orderId       String        @map("order_id") @db.Uuid
+  position      Int
+  kind          OrderLineKind
+  /// Kept for reports only; deliberately no foreign key, so catalog deletes never touch history.
+  productId     String?       @map("product_id") @db.Uuid
+  variationId   String?       @map("variation_id") @db.Uuid
+  name          Json
+  sku           String?
+  options       Json          @default("[]")
+  addOns        Json          @default("[]") @map("add_ons")
+  bundleItems   Json          @default("[]") @map("bundle_items")
+  quantity      Int
+  unitMinor     Int           @map("unit_minor")
+  discountMinor Int           @map("discount_minor")
+  taxMinor      Int           @map("tax_minor")
+  totalMinor    Int           @map("total_minor")
+  order         CustomerOrder @relation("c5_order_line_order", fields: [orderId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@unique([orderId, position])
+  @@index([orderId, brandId])
+  @@map("order_line")
+}
+
+model OrderPromotion {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  brandId     String        @map("brand_id") @db.Uuid
+  orderId     String        @map("order_id") @db.Uuid
+  promotionId String?       @map("promotion_id") @db.Uuid
+  couponCode  String?       @map("coupon_code")
+  name        Json
+  kind        PromotionKind
+  amountMinor Int           @map("amount_minor")
+  order       CustomerOrder @relation("c5_order_promotion_order", fields: [orderId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@index([orderId, brandId])
+  @@map("order_promotion")
+}
+
+model OrderStatusHistory {
+  id              String        @id @default(uuid(7)) @db.Uuid
+  brandId         String        @map("brand_id") @db.Uuid
+  orderId         String        @map("order_id") @db.Uuid
+  /// ORDER, PAYMENT or FULFILLMENT.
+  dimension       String
+  fromStatus      String?       @map("from_status")
+  toStatus        String        @map("to_status")
+  actorStaffId    String?       @map("actor_staff_id") @db.Uuid
+  actorCustomerId String?       @map("actor_customer_id") @db.Uuid
+  reason          String?
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  order           CustomerOrder @relation("c5_order_history_order", fields: [orderId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
+  @@index([orderId, brandId])
+  @@map("order_status_history")
+}
+
+model OrderCounter {
+  brandId   String @id @map("brand_id") @db.Uuid
+  prefix    String
+  nextValue Int    @default(100000) @map("next_value")
+  brand     Brand  @relation("c5_order_counter_brand", fields: [brandId], references: [id], onDelete: Restrict)
+
+  @@map("order_counter")
+}
+
+model PaymentConfig {
+  id                   String          @id @default(uuid(7)) @db.Uuid
+  brandId              String          @map("brand_id") @db.Uuid
+  marketId             String          @map("market_id") @db.Uuid
+  provider             PaymentProvider
+  version              Int
+  status               ActiveStatus    @default(ACTIVE)
+  displayName          Json            @map("display_name")
+  enabledMethods       String[]        @map("enabled_methods")
+  /// EncryptionService envelope (AES-256-GCM, key ring). Null for COD and MANUAL. Never returned by any API.
+  credentialsEncrypted String?         @map("credentials_encrypted")
+  credentialsLast4     String?         @map("credentials_last4")
+  testMode             Boolean         @default(true) @map("test_mode")
+  codZoneIds           String[]        @map("cod_zone_ids")
+  codMaxOrderMinor     Int?            @map("cod_max_order_minor")
+  createdById          String?         @map("created_by_id") @db.Uuid
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  market               Market          @relation("c5_payment_config_market", fields: [marketId, brandId], references: [id, brandId], onDelete: Restrict)
+  payments             Payment[]       @relation("c5_payment_config")
+
+  @@unique([id, brandId])
+  @@unique([brandId, marketId, provider, version])
+  @@index([marketId, brandId])
+  @@map("payment_config")
+}
+
+model Payment {
+  id            String           @id @default(uuid(7)) @db.Uuid
+  brandId       String           @map("brand_id") @db.Uuid
+  orderId       String           @unique @map("order_id") @db.Uuid
+  provider      PaymentProvider
+  configId      String           @map("config_id") @db.Uuid
+  configVersion Int              @map("config_version")
+  currencyCode  String           @map("currency_code") @db.Char(3)
+  amountMinor   Int              @map("amount_minor")
+  paidMinor     Int              @default(0) @map("paid_minor")
+  refundedMinor Int              @default(0) @map("refunded_minor")
+  status        PaymentStatus    @default(UNPAID)
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
+  order         CustomerOrder    @relation("c5_payment_order", fields: [orderId, brandId], references: [id, brandId], onDelete: Restrict)
+  config        PaymentConfig    @relation("c5_payment_config", fields: [configId, brandId], references: [id, brandId], onDelete: Restrict)
+  attempts      PaymentAttempt[] @relation("c5_attempt_payment")
+  events        PaymentEvent[]   @relation("c5_event_payment")
+
+  @@unique([id, brandId])
+  @@unique([orderId, brandId])
+  @@index([configId, brandId])
+  @@map("payment")
+}
+
+model PaymentAttempt {
+  id                String               @id @default(uuid(7)) @db.Uuid
+  brandId           String               @map("brand_id") @db.Uuid
+  paymentId         String               @map("payment_id") @db.Uuid
+  reference         String
+  status            PaymentAttemptStatus @default(INITIATED)
+  amountMinor       Int                  @map("amount_minor")
+  currencyCode      String               @map("currency_code") @db.Char(3)
+  providerReference String?              @map("provider_reference")
+  /// Allow-listed fields only; never card data.
+  requestSummary    Json                 @default("{}") @map("request_summary")
+  verifiedSummary   Json?                @map("verified_summary")
+  idempotencyKey    String               @map("idempotency_key")
+  expiresAt         DateTime             @map("expires_at") @db.Timestamptz()
+  verifiedAt        DateTime?            @map("verified_at") @db.Timestamptz()
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  payment           Payment              @relation("c5_attempt_payment", fields: [paymentId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@unique([brandId, reference])
+  @@unique([brandId, idempotencyKey])
+  @@index([paymentId, brandId])
+  @@index([status, expiresAt])
+  @@map("payment_attempt")
+}
+
+model PaymentEvent {
+  id         String          @id @default(uuid(7)) @db.Uuid
+  brandId    String          @map("brand_id") @db.Uuid
+  paymentId  String?         @map("payment_id") @db.Uuid
+  provider   PaymentProvider
+  /// The provider's own event or tracking id; the unique key makes a repeated callback a no-op.
+  eventKey   String          @map("event_key")
+  kind       String
+  accepted   Boolean
+  summary    Json            @default("{}")
+  receivedAt DateTime        @default(now()) @map("received_at") @db.Timestamptz()
+  payment    Payment?        @relation("c5_event_payment", fields: [paymentId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@unique([brandId, provider, eventKey])
+  @@index([paymentId, brandId])
+  @@map("payment_event")
+}
+
+model Promotion {
+  id               String                 @id @default(uuid(7)) @db.Uuid
+  brandId          String                 @map("brand_id") @db.Uuid
+  code             String
+  kind             PromotionKind
+  scope            PromotionScope         @default(ORDER)
+  percentBps       Int?                   @map("percent_bps")
+  fixedMinor       Int?                   @map("fixed_minor")
+  currencyCode     String?                @map("currency_code") @db.Char(3)
+  giftProductId    String?                @map("gift_product_id") @db.Uuid
+  giftVariationId  String?                @map("gift_variation_id") @db.Uuid
+  maxDiscountMinor Int?                   @map("max_discount_minor")
+  minSubtotalMinor Int                    @default(0) @map("min_subtotal_minor")
+  audience         PromotionAudience      @default(EVERYONE)
+  priority         Int                    @default(100)
+  combinable       Boolean                @default(false)
+  startsAt         DateTime?              @map("starts_at") @db.Timestamptz()
+  endsAt           DateTime?              @map("ends_at") @db.Timestamptz()
+  usageLimit       Int?                   @map("usage_limit")
+  perCustomerLimit Int?                   @map("per_customer_limit")
+  usedCount        Int                    @default(0) @map("used_count")
+  requiresCoupon   Boolean                @default(false) @map("requires_coupon")
+  status           ActiveStatus           @default(ACTIVE)
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz()
+  currency         Currency?              @relation("c5_promotion_currency", fields: [currencyCode], references: [code], onDelete: Restrict)
+  giftProduct      Product?               @relation("c5_promotion_gift_product", fields: [giftProductId, brandId], references: [id, brandId], onDelete: Restrict)
+  giftVariation    Variation?             @relation("c5_promotion_gift_variation", fields: [giftVariationId, brandId], references: [id, brandId], onDelete: Restrict)
+  translations     PromotionTranslation[] @relation("c5_promotion_translation")
+  markets          PromotionMarket[]      @relation("c5_promotion_market_promotion")
+  targets          PromotionTarget[]      @relation("c5_promotion_target_promotion")
+  coupons          Coupon[]               @relation("c5_coupon_promotion")
+  usages           PromotionUsage[]       @relation("c5_usage_promotion")
+
+  @@unique([id, brandId])
+  @@unique([brandId, code])
+  @@index([brandId, status, priority])
+  @@index([giftProductId, brandId])
+  @@index([giftVariationId, brandId])
+  @@index([currencyCode])
+  @@map("promotion")
+}
+
+model PromotionTranslation {
+  promotionId String    @map("promotion_id") @db.Uuid
+  brandId     String    @map("brand_id") @db.Uuid
+  language    String
+  name        String
+  description String?
+  promotion   Promotion @relation("c5_promotion_translation", fields: [promotionId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([promotionId, language])
+  @@index([promotionId, brandId])
+  @@map("promotion_translation")
+}
+
+model PromotionMarket {
+  promotionId String    @map("promotion_id") @db.Uuid
+  brandId     String    @map("brand_id") @db.Uuid
+  marketId    String    @map("market_id") @db.Uuid
+  promotion   Promotion @relation("c5_promotion_market_promotion", fields: [promotionId, brandId], references: [id, brandId], onDelete: Cascade)
+  market      Market    @relation("c5_promotion_market_market", fields: [marketId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([promotionId, marketId])
+  @@index([promotionId, brandId])
+  @@index([marketId, brandId])
+  @@map("promotion_market")
+}
+
+model PromotionTarget {
+  id           String      @id @default(uuid(7)) @db.Uuid
+  brandId      String      @map("brand_id") @db.Uuid
+  promotionId  String      @map("promotion_id") @db.Uuid
+  productId    String?     @map("product_id") @db.Uuid
+  categoryId   String?     @map("category_id") @db.Uuid
+  collectionId String?     @map("collection_id") @db.Uuid
+  promotion    Promotion   @relation("c5_promotion_target_promotion", fields: [promotionId, brandId], references: [id, brandId], onDelete: Cascade)
+  product      Product?    @relation("c5_promotion_target_product", fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+  category     Category?   @relation("c5_promotion_target_category", fields: [categoryId, brandId], references: [id, brandId], onDelete: Cascade)
+  collection   Collection? @relation("c5_promotion_target_collection", fields: [collectionId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@index([promotionId, brandId])
+  @@index([productId, brandId])
+  @@index([categoryId, brandId])
+  @@index([collectionId, brandId])
+  @@map("promotion_target")
+}
+
+model Coupon {
+  id          String           @id @default(uuid(7)) @db.Uuid
+  brandId     String           @map("brand_id") @db.Uuid
+  promotionId String           @map("promotion_id") @db.Uuid
+  /// Stored upper-case, unique per brand.
+  code        String
+  usageLimit  Int?             @map("usage_limit")
+  usedCount   Int              @default(0) @map("used_count")
+  status      ActiveStatus     @default(ACTIVE)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  promotion   Promotion        @relation("c5_coupon_promotion", fields: [promotionId, brandId], references: [id, brandId], onDelete: Restrict)
+  usages      PromotionUsage[] @relation("c5_usage_coupon")
+
+  @@unique([id, brandId])
+  @@unique([brandId, code])
+  @@index([promotionId, brandId])
+  @@map("coupon")
+}
+
+model PromotionUsage {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  brandId     String        @map("brand_id") @db.Uuid
+  promotionId String        @map("promotion_id") @db.Uuid
+  couponId    String?       @map("coupon_id") @db.Uuid
+  orderId     String        @map("order_id") @db.Uuid
+  customerId  String?       @map("customer_id") @db.Uuid
+  amountMinor Int           @map("amount_minor")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  promotion   Promotion     @relation("c5_usage_promotion", fields: [promotionId, brandId], references: [id, brandId], onDelete: Restrict)
+  coupon      Coupon?       @relation("c5_usage_coupon", fields: [couponId, brandId], references: [id, brandId], onDelete: Restrict)
+  order       CustomerOrder @relation("c5_usage_order", fields: [orderId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@unique([orderId, promotionId])
+  @@index([promotionId, brandId])
+  @@index([couponId, brandId])
+  @@index([orderId, brandId])
+  @@index([customerId])
+  @@map("promotion_usage")
+}
+
+model CustomerAddress {
+  id            String       @id @default(uuid(7)) @db.Uuid
+  brandId       String       @map("brand_id") @db.Uuid
+  customerId    String       @map("customer_id") @db.Uuid
+  label         String?
+  recipientName String       @map("recipient_name")
+  phone         String
+  line1         String
+  line2         String?
+  areaId        String       @map("area_id") @db.Uuid
+  city          String?
+  notes         String?
+  isDefault     Boolean      @default(false) @map("is_default")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+  customer      Customer     @relation("c5_address_customer", fields: [customerId, brandId], references: [id, brandId], onDelete: Cascade)
+  area          DeliveryArea @relation("c5_address_area", fields: [areaId], references: [id], onDelete: Restrict)
+
+  @@unique([id, brandId])
+  @@index([customerId, brandId])
+  @@index([areaId])
+  @@map("customer_address")
 }

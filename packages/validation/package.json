@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --experimental-strip-types src/index.test.ts src/catalog.test.ts src/inventory-delivery.test.ts"
+    "test": "node --test --experimental-strip-types src/index.test.ts src/catalog.test.ts src/inventory-delivery.test.ts src/commerce.test.ts"
   },
   "dependencies": {
     "zod": "4.6.7"

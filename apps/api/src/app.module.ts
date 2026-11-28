@@ -19,6 +19,12 @@ import { AvailabilityModule } from './modules/availability/availability.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { JobsModule } from './modules/jobs/jobs.module';
+import { CartsModule } from './modules/carts/carts.module';
+import { PricingModule } from './modules/pricing/pricing.module';
+import { CheckoutModule } from './modules/checkout/checkout.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { PromotionsModule } from './modules/promotions/promotions.module';
 
 @Module({
   imports: [
@@ -40,6 +46,12 @@ import { JobsModule } from './modules/jobs/jobs.module';
     InventoryModule,
     DeliveryModule,
     AvailabilityModule,
+    PricingModule,
+    CartsModule,
+    PromotionsModule,
+    CheckoutModule,
+    OrdersModule,
+    PaymentsModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })
